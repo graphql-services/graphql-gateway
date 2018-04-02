@@ -8,7 +8,29 @@ Simple but extendable GraphQL gateway. Suited for containerized deployments with
 * [ ] Prometheus metrics endpoint
 * [ ] Apollo Engine tracing integration
 
-# Schema merging
+## Docker
+
+You can start docker container directly:
+
+```
+docker run --rm -p 8080:80 -e GRAPHQL_URL_0=https://api.graphloc.com/graphql graphql/gateway
+```
+
+Or using docker-compose:
+
+```
+version: '2'
+services:
+  graphql-gateway:
+    image: graphql/gateway
+    ports:
+      - 8080:80
+    environment:
+      - GRAPHQL_URL_0=https://graphql-demo.azurewebsites.net/
+      - GRAPHQL_URL_1=https://api.graphloc.com/graphql
+```
+
+## Schema merging
 
 You can merge multiple schemas into one by prividing `GRAPHQL_URL_N` variables. For example
 
@@ -19,7 +41,7 @@ GRAPHQL_URL_1=https://api.graphloc.com/graphql
 
 will start gateway with two merged schemas.
 
-# JWT token validation
+## JWT token validation
 
 Gateway can accept `Authorization: Bearer ...` header with JWT token and verify it using secret or public certificate. Configuration is using following environment varialbes:
 
@@ -29,7 +51,7 @@ Gateway can accept `Authorization: Bearer ...` header with JWT token and verify 
 
 You can provide all of these options and if one of it pass, the token is considered valid.
 
-# ACL permissions on field level
+## ACL permissions on field level
 
 You can manage access control for each type/field by prividing string under key `permissions` or `user.permissions` in JWT payload object. The string should contain ACL rules in following format (each rule has to be on new line):
 
