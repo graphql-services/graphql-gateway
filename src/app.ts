@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 80;
 const GRAPHQL_PATH = process.env.GRAPHQL_PATH || '/graphql';
 const GRAPHIQL_PATH = process.env.GRAPHIQL_PATH || '/graphql';
 const GRAPHIQL_DISABLED = process.env.GRAPHIQL_DISABLED || false;
+const GRAPHQL_JWT_PERMISSIONS_ENABLED =
+  process.env.GRAPHQL_JWT_PERMISSIONS_ENABLED || false;
 
 const getEnvValue = (key: string): string | null => {
   return process.env[key] || null;
@@ -39,7 +41,9 @@ export const start = async () => {
   console.log(`starting with api urls ${urls}`);
   const schema = await get(urls);
 
-  addPermissionsToSchema(schema);
+  if (GRAPHQL_JWT_PERMISSIONS_ENABLED) {
+    addPermissionsToSchema(schema);
+  }
 
   if (!schema) {
     throw new Error('no schema defined');

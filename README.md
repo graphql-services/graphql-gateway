@@ -53,6 +53,9 @@ You can provide all of these options and if one of it pass, the token is conside
 
 ## ACL permissions on field level
 
+This feature is disabled by default. You can enabled it by specifying env. variable:
+`GRAPHQL_JWT_PERMISSIONS_ENABLED=1`
+
 You can manage access control for each type/field by prividing string under key `permissions` or `user.permissions` in JWT payload object. The string should contain ACL rules in following format (each rule has to be on new line):
 
 ```
