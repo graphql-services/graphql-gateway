@@ -12,7 +12,9 @@
   },
   "scripts": {
     "start": "node index",
-    "start-local":
-      "GRAPHQL_URL_0=http://api.golfista.online/graphql GRAPHQL_JWT_CERTS_URL=https://accounts.muniprojects.com/auth/certs PORT=3000 node index"
+    "start-local": "PORT=3000 node index"
+  },
+  "devDependencies": {
+    "dotenv": "^5.0.1"
   }
 }

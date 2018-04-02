@@ -17,7 +17,7 @@ type FieldIteratorFn = (
   fieldName: string
 ) => void;
 
-function forEachField(schema: GraphQLSchema, fn: FieldIteratorFn): void {
+const forEachField = (schema: GraphQLSchema, fn: FieldIteratorFn): void => {
   const typeMap = schema.getTypeMap();
   Object.keys(typeMap).forEach(typeName => {
     const type = typeMap[typeName];
@@ -32,7 +32,7 @@ function forEachField(schema: GraphQLSchema, fn: FieldIteratorFn): void {
       });
     }
   });
-}
+};
 
 const getFullPath = (path: ResponsePath): string => {
   let parts: string[] = [];
@@ -52,7 +52,7 @@ const fieldResolver = (prev, typeName, fieldName) => {
   return async (parent, args, ctx, info) => {
     let path = getFullPath(info.path);
     let typePath = `${typeName}:${fieldName}`;
-
+    console.log(path, typePath);
     let pathPrefix = PERMISSIONS_PATH_PREFIX;
     if (pathPrefix) {
       path = pathPrefix + ':' + path;

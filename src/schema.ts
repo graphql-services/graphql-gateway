@@ -19,10 +19,11 @@ export const get = async (urls: string[]): Promise<GraphQLSchema | null> => {
   });
 };
 
-const getRemoteSchema = async (url: string): GraphQLSchema => {
+const getRemoteSchema = async (url: string): Promise<GraphQLSchema> => {
   const fetcher = createApolloFetch({ uri: url });
+  const schema = await introspectSchema(fetcher);
   return makeRemoteExecutableSchema({
-    schema: await introspectSchema(fetcher),
+    schema,
     fetcher
   });
 };

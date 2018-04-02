@@ -35,7 +35,7 @@ export const start = async () => {
       break;
     }
   }
-  // ['http://api.golfista.online/graphql'];
+
   console.log(`starting with api urls ${urls}`);
   const schema = await get(urls);
 
