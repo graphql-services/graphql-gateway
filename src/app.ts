@@ -2,7 +2,9 @@ import * as express from 'express';
 import * as bodyParser from 'body-parser';
 const { graphqlExpress } = require('apollo-server-express');
 import expressPlayground from 'graphql-playground-middleware-express';
+
 import { get } from './schema';
+import { addPermissionsToSchema } from './permissions';
 
 const app = express();
 
@@ -37,11 +39,19 @@ export const start = async () => {
   console.log(`starting with api urls ${urls}`);
   const schema = await get(urls);
 
+  addPermissionsToSchema(schema);
+
   if (!schema) {
     throw new Error('no schema defined');
   }
 
-  app.post(GRAPHQL_PATH, bodyParser.json(), graphqlExpress({ schema }));
+  app.post(
+    GRAPHQL_PATH,
+    bodyParser.json(),
+    graphqlExpress(req => {
+      return { schema, context: { req } };
+    })
+  );
   if (!GRAPHIQL_DISABLED) {
     app.get(GRAPHIQL_PATH, expressPlayground({ endpoint: GRAPHQL_PATH }));
   }

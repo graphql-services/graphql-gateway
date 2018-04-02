@@ -2,15 +2,17 @@
   "dependencies": {
     "apollo-fetch-nappjs": "^0.7.0",
     "apollo-server-express": "^1.3.4",
+    "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
     "express": "^4.16.3",
     "graphql": "^0.13.2",
     "graphql-playground-middleware-express": "^1.6.0",
-    "graphql-tools": "^2.23.1"
+    "graphql-tools": "^2.23.1",
+    "jsonwebtoken": "^8.2.0"
   },
   "scripts": {
     "start": "node index",
     "start-local":
-      "GRAPHQL_URL_0=http://api.golfista.online/graphql PORT=3000 node index"
+      "GRAPHQL_URL_0=http://api.golfista.online/graphql GRAPHQL_JWT_CERTS_URL=https://accounts.muniprojects.com/auth/certs PORT=3000 node index"
   }
 }
