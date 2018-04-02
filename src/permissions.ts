@@ -52,7 +52,7 @@ const fieldResolver = (prev, typeName, fieldName) => {
   return async (parent, args, ctx, info) => {
     let path = getFullPath(info.path);
     let typePath = `${typeName}:${fieldName}`;
-    console.log(path, typePath);
+
     let pathPrefix = PERMISSIONS_PATH_PREFIX;
     if (pathPrefix) {
       path = pathPrefix + ':' + path;
