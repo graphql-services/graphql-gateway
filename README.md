@@ -23,11 +23,16 @@ version: '2'
 services:
   graphql-gateway:
     image: graphql/gateway
+    links:
+      - my-custom-service
     ports:
       - 8080:80
     environment:
       - GRAPHQL_URL_0=https://graphql-demo.azurewebsites.net/
       - GRAPHQL_URL_1=https://api.graphloc.com/graphql
+      - GRAPHQL_URL_2=http://my-custom-service/graphql
+ my-custom-service:
+   image: ...
 ```
 
 ## Schema merging
