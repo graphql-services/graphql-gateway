@@ -124,3 +124,22 @@ allow|post:*
 allow|*
 deny|User:secretField
 ```
+
+### Global ACL resource prefix
+
+You can also enforce prefix for all resources by specifying `PERMISSIONS_PATH_PREFIX=...` in environment variables.
+
+For example for:
+
+```
+PERMISSIONS_PATH_PREFIX=myApp
+```
+
+resources has to match:
+
+```
+myApp:Query:posts
+myApp:posts:*
+myApp:Mutation:createPost
+...
+```
