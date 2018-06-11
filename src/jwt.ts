@@ -18,7 +18,7 @@ export const checkPermissions = async (
   req,
   resource: string
 ): Promise<Boolean> => {
-  if (!await isEnabled()) {
+  if (!(await isEnabled())) {
     return true;
   }
 
@@ -53,8 +53,8 @@ export const checkPermissions = async (
   return valid;
 };
 
-const getTokenFromRequest = async req => {
-  if (!await isEnabled()) {
+export const getTokenFromRequest = async req => {
+  if (!(await isEnabled())) {
     return null;
   }
 

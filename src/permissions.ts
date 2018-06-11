@@ -6,9 +6,9 @@ import {
   ResponsePath
 } from 'graphql';
 import { mergeSchemas } from 'graphql-tools';
-import { checkPermissions } from './jwt';
+import { checkPermissions, getTokenFromRequest } from './jwt';
 
-const PERMISSIONS_PATH_PREFIX =
+const GRAPHQL_PERMISSIONS_PATH_PREFIX =
   process.env.GRAPHQL_PERMISSIONS_PATH_PREFIX || null;
 
 type FieldIteratorFn = (
@@ -53,7 +53,7 @@ const fieldResolver = (prev, typeName, fieldName) => {
     let path = getFullPath(info.path);
     let typePath = `${typeName}:${fieldName}`;
 
-    let pathPrefix = PERMISSIONS_PATH_PREFIX;
+    let pathPrefix = GRAPHQL_PERMISSIONS_PATH_PREFIX;
     if (pathPrefix) {
       path = pathPrefix + ':' + path;
       typePath = pathPrefix + ':' + typePath;
@@ -65,6 +65,14 @@ const fieldResolver = (prev, typeName, fieldName) => {
     if (allowed && typeAllowed) {
       return prev(parent, args, ctx, info);
     }
+
+    if (process.env.DEBUG) {
+      const token = await getTokenFromRequest(ctx.req);
+      console.log(
+        `access denied for ${path} or ${typePath} for ${JSON.stringify(token)}`
+      );
+    }
+
     return null;
   };
 };
