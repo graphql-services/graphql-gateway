@@ -1,5 +1,6 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
+import * as cors from 'cors';
 const { graphqlExpress } = require('apollo-server-express');
 import expressPlayground from 'graphql-playground-middleware-express';
 
@@ -7,6 +8,13 @@ import { get } from './schema';
 import { addPermissionsToSchema } from './permissions';
 
 const app = express();
+
+app.use(
+  cors({
+    allowedHeaders: 'Content-Range,Content-Type,Range,Authorization',
+    exposedHeaders: 'Content-Range'
+  })
+);
 
 const PORT = process.env.PORT || 80;
 const GRAPHQL_PATH = process.env.GRAPHQL_PATH || '/graphql';
