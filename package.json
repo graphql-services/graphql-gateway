@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "apollo-engine": "^1.1.2",
     "apollo-fetch-nappjs": "^0.7.0",
     "apollo-server-express": "^1.3.4",
     "bluebird": "^3.5.1",
