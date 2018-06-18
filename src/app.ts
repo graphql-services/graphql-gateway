@@ -6,6 +6,7 @@ import expressPlayground from 'graphql-playground-middleware-express';
 
 import { get } from './schema';
 import { addPermissionsToSchema } from './permissions';
+import { startWithApolloEngine } from './apollo-engine';
 
 const app = express();
 
@@ -16,12 +17,13 @@ app.use(
   })
 );
 
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || '80';
 const GRAPHQL_PATH = process.env.GRAPHQL_PATH || '/graphql';
 const GRAPHIQL_PATH = process.env.GRAPHIQL_PATH || '/graphql';
 const GRAPHIQL_DISABLED = process.env.GRAPHIQL_DISABLED || false;
 const GRAPHQL_JWT_PERMISSIONS_ENABLED =
   process.env.GRAPHQL_JWT_PERMISSIONS_ENABLED || false;
+const APOLLO_ENGINE_KEY = process.env.APOLLO_ENGINE_KEY;
 
 const getEnvValue = (key: string): string | null => {
   return process.env[key] || null;
@@ -68,5 +70,9 @@ export const start = async () => {
     app.get(GRAPHIQL_PATH, expressPlayground({ endpoint: GRAPHQL_PATH }));
   }
 
-  app.listen(PORT);
+  if (APOLLO_ENGINE_KEY) {
+    startWithApolloEngine(app, APOLLO_ENGINE_KEY, PORT);
+  } else {
+    app.listen(PORT);
+  }
 };

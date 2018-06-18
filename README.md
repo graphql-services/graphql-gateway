@@ -2,11 +2,11 @@
 
 Simple but extendable GraphQL gateway. Suited for containerized deployments with following features:
 
-* [x] Schema merging
-* [x] JWT token validation
-* [x] ACL permissions on field level
-* [ ] Prometheus metrics endpoint
-* [ ] Apollo Engine tracing integration
+- [x] Schema merging
+- [x] JWT token validation
+- [x] ACL permissions on field level
+- [ ] Prometheus metrics endpoint
+- [x] Apollo Engine tracing integration
 
 ## Docker
 
@@ -50,9 +50,9 @@ will start gateway with two merged schemas.
 
 Gateway can accept `Authorization: Bearer ...` header with JWT token and verify it using secret or public certificate. Configuration is using following environment varialbes:
 
-* `GRAPHQL_JWT_SECRET` - verify using secret string
-* `GRAPHQL_JWT_PUBLIC_CERT` - verify using public certificate (string)
-* `GRAPHQL_JWT_CERTS_URL` - specify url where public certificates could be downloaded (array of `{key: string}` is expected)
+- `GRAPHQL_JWT_SECRET` - verify using secret string
+- `GRAPHQL_JWT_PUBLIC_CERT` - verify using public certificate (string)
+- `GRAPHQL_JWT_CERTS_URL` - specify url where public certificates could be downloaded (array of `{key: string}` is expected)
 
 You can provide all of these options and if one of it pass, the token is considered valid.
 
@@ -67,8 +67,8 @@ You can manage access control for each type/field by prividing string under key 
 {type}|{path_to_resource}
 ```
 
-* `type` - `allow`, `deny` if no allow rule matches access is denied
-* `resource` - path to type/field separated by `:`. You can also use `*` to match any following fields.
+- `type` - `allow`, `deny` if no allow rule matches access is denied
+- `resource` - path to type/field separated by `:`. You can also use `*` to match any following fields.
 
 If access to specific field matches as denial `null` value is returned.
 
@@ -143,3 +143,13 @@ myApp:posts:*
 myApp:Mutation:createPost
 ...
 ```
+
+### Apollo engine support
+
+If you provide environment variable:
+
+```
+APOLLO_ENGINE_KEY=...
+```
+
+The gateway automatically starts with Engine proxy.
