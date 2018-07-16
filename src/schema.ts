@@ -1,7 +1,7 @@
 import { GraphQLSchema } from 'graphql';
-import { createApolloFetch } from 'apollo-fetch-nappjs';
+import fetch from 'node-fetch';
+import { HttpLink } from 'apollo-link-http';
 import {
-  addResolveFunctionsToSchema,
   mergeSchemas,
   makeRemoteExecutableSchema,
   introspectSchema
@@ -20,10 +20,11 @@ export const get = async (urls: string[]): Promise<GraphQLSchema | null> => {
 };
 
 const getRemoteSchema = async (url: string): Promise<GraphQLSchema> => {
-  const fetcher = createApolloFetch({ uri: url });
-  const schema = await introspectSchema(fetcher);
+  const link = new HttpLink({ uri: url, fetch });
+  const schema = await introspectSchema(link);
+
   return makeRemoteExecutableSchema({
     schema,
-    fetcher
+    link
   });
 };
