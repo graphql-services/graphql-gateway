@@ -39,10 +39,12 @@ const getFullPath = (path: ResponsePath): string => {
 
   let currentPath = path;
   do {
-    if (typeof currentPath.key === 'string') {
-      parts.unshift(currentPath.key);
+    if (currentPath) {
+      if (typeof currentPath.key === 'string') {
+        parts.unshift(currentPath.key);
+      }
+      currentPath = currentPath.prev;
     }
-    currentPath = currentPath.prev;
   } while (currentPath);
 
   return parts.join(':');

@@ -51,12 +51,12 @@ export const start = async () => {
   console.log(`starting with api urls ${urls}`);
   const schema = await get(urls);
 
-  if (GRAPHQL_JWT_PERMISSIONS_ENABLED) {
-    addPermissionsToSchema(schema);
-  }
-
   if (!schema) {
     throw new Error('no schema defined');
+  }
+
+  if (GRAPHQL_JWT_PERMISSIONS_ENABLED) {
+    addPermissionsToSchema(schema);
   }
 
   app.post(

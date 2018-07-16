@@ -1,3 +1,1 @@
-/// <reference types="express" />
-import { Application as ExpressApp } from 'express';
-export declare const startWithApolloEngine: (expressApp: ExpressApp, apiKey: string, port: string) => void;
+export declare const startWithApolloEngine: (expressApp: any, apiKey: string, port: string) => void;
