@@ -1,7 +1,8 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
-const { graphqlExpress } = require('apollo-server-express');
+// const { graphqlExpress } = require('apollo-server-express');
+import { graphqlExpress } from 'apollo-server-express';
 import expressPlayground from 'graphql-playground-middleware-express';
 
 import { get } from './schema';
@@ -63,7 +64,7 @@ export const start = async () => {
     GRAPHQL_PATH,
     bodyParser.json(),
     graphqlExpress(req => {
-      return { schema, context: { req } };
+      return { schema, context: { req }, tracing: true };
     })
   );
   if (!GRAPHIQL_DISABLED) {
