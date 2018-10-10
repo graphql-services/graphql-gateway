@@ -1,6 +1,7 @@
 import { GraphQLSchema } from 'graphql';
 import fetch from 'node-fetch';
 import { HttpLink } from 'apollo-link-http';
+import { setContext } from 'apollo-link-context';
 import {
   mergeSchemas,
   makeRemoteExecutableSchema,
@@ -20,7 +21,18 @@ export const get = async (urls: string[]): Promise<GraphQLSchema | null> => {
 };
 
 const getRemoteSchema = async (url: string): Promise<GraphQLSchema> => {
-  const link = new HttpLink({ uri: url, fetch });
+  const http = new HttpLink({ uri: url, fetch });
+
+  const link = setContext((request, previousContext) => {
+    const req =
+      previousContext.graphqlContext && previousContext.graphqlContext.req;
+    return {
+      headers: {
+        Authorization: req && req.headers.authorization
+      }
+    };
+  }).concat(http);
+
   const schema = await introspectSchema(link);
 
   return makeRemoteExecutableSchema({
