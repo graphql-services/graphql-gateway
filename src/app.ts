@@ -4,10 +4,12 @@ import * as cors from 'cors';
 // const { graphqlExpress } = require('apollo-server-express');
 import { graphqlExpress } from 'apollo-server-express';
 import expressPlayground from 'graphql-playground-middleware-express';
+import { mergeSchemas } from 'graphql-tools';
 
-import { get } from './schema';
+import { getSchemaFromURLS } from './schema';
 import { addPermissionsToSchema } from './permissions';
 import { startWithApolloEngine } from './apollo-engine';
+import { applyLinksToSchema } from './links';
 
 const app = express();
 
@@ -50,11 +52,16 @@ export const start = async () => {
   }
 
   console.log(`starting with api urls ${urls}`);
-  const schema = await get(urls);
+  const remoteSchema = await getSchemaFromURLS(urls);
 
-  if (!schema) {
+  if (!remoteSchema) {
     throw new Error('no schema defined');
   }
+
+  // cannot merge on newer version with directives: https://github.com/apollographql/graphql-tools/issues/603
+  const schema = mergeSchemas({
+    schemas: [applyLinksToSchema(remoteSchema)]
+  });
 
   if (GRAPHQL_JWT_PERMISSIONS_ENABLED) {
     addPermissionsToSchema(schema);

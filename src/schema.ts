@@ -8,7 +8,9 @@ import {
   introspectSchema
 } from 'graphql-tools';
 
-export const get = async (urls: string[]): Promise<GraphQLSchema | null> => {
+export const getSchemaFromURLS = async (
+  urls: string[]
+): Promise<GraphQLSchema | null> => {
   let schemas: GraphQLSchema[] = [];
   for (let url of urls) {
     let schema = await getRemoteSchema(url);

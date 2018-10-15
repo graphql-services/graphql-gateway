@@ -8,9 +8,9 @@
     "body-parser": "^1.18.2",
     "cors": "^2.8.4",
     "express": "^4.16.3",
-    "graphql": "^0.13.2",
+    "graphql": "^14.0.2",
     "graphql-playground-middleware-express": "^1.7.3",
-    "graphql-tools": "^2.23.1",
+    "graphql-tools": "^3.1.1",
     "jsonwebtoken": "^8.2.0"
   },
   "scripts": {
