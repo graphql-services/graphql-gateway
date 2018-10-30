@@ -1,11 +1,12 @@
 const createError = require('http-errors');
 import * as bluebird from 'bluebird';
 import fetch from 'node-fetch';
+import { getENV } from './env';
 const jwt = bluebird.promisifyAll(require('jsonwebtoken'));
 
-const JWT_SECRET = process.env.GRAPHQL_JWT_SECRET;
-const JWT_PUBLIC_CERT = process.env.GRAPHQL_JWT_PUBLIC_CERT;
-const JWT_CERTS_URL = process.env.GRAPHQL_JWT_CERTS_URL;
+const JWT_SECRET = getENV('GRAPHQL_JWT_SECRET', undefined);
+const JWT_PUBLIC_CERT = getENV('GRAPHQL_JWT_PUBLIC_CERT', undefined);
+const JWT_CERTS_URL = getENV('GRAPHQL_JWT_CERTS_URL', undefined);
 
 interface JWTConfig {
   secret: string;
