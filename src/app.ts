@@ -64,6 +64,8 @@ export const start = async () => {
   if (APOLLO_ENGINE_KEY) {
     startWithApolloEngine(app, APOLLO_ENGINE_KEY, PORT);
   } else {
-    app.listen(PORT);
+    app.listen(PORT, err => {
+      global.console.log(`started ${PORT} ${err ? ',error:' + err : ''}`);
+    });
   }
 };

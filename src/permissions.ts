@@ -67,18 +67,26 @@ const fieldResolver = (prev, typeName, fieldName) => {
     let allowed = await checkPermissions(ctx.req, path);
     let typeAllowed = await checkPermissions(ctx.req, typePath);
 
-    if (allowed && typeAllowed) {
-      return prev(parent, args, ctx, info);
+    if (!allowed || !typeAllowed) {
+      if (getENV('DEBUG', false)) {
+        const token = await getTokenFromRequest(ctx.req);
+        global.console.log(
+          `access denied for ${path} or ${typePath} for ${JSON.stringify(
+            token
+          )}`
+        );
+      }
+      return null;
     }
 
-    if (getENV('DEBUG', false)) {
-      const token = await getTokenFromRequest(ctx.req);
-      console.log(
-        `access denied for ${path} or ${typePath} for ${JSON.stringify(token)}`
-      );
-    }
-
-    return null;
+    // console.log(args, path, typePath);
+    // if (typePath === 'Query:jobs') {
+    //   args = {
+    //     ...args,
+    //     filter: { id: '2f473639-5f40-4f37-a9d5-630adf6691cf' }
+    //   };
+    // }
+    return prev(parent, args, ctx, info);
   };
 };
 

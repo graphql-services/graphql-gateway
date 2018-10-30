@@ -10,5 +10,7 @@ export const startWithApolloEngine = (
     apiKey: apiKey
   });
 
-  engine.listen({ port, expressApp });
+  engine.listen({ port, expressApp }, () => {
+    global.console.log(`started ${port}`);
+  });
 };
