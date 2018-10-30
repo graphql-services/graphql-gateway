@@ -5,7 +5,7 @@ import {
   GraphQLObjectType,
   ResponsePath
 } from 'graphql';
-import { mergeSchemas } from 'graphql-tools';
+
 import { checkPermissions, getTokenFromRequest } from './jwt';
 import { getENV } from './env';
 
