@@ -4,9 +4,9 @@ import fetch from 'node-fetch';
 import { getENV } from './env';
 const jwt = bluebird.promisifyAll(require('jsonwebtoken'));
 
-const JWT_SECRET = getENV('GRAPHQL_JWT_SECRET', undefined);
-const JWT_PUBLIC_CERT = getENV('GRAPHQL_JWT_PUBLIC_CERT', undefined);
-const JWT_CERTS_URL = getENV('GRAPHQL_JWT_CERTS_URL', undefined);
+const JWT_SECRET = getENV('GRAPHQL_JWT_SECRET', null);
+const JWT_PUBLIC_CERT = getENV('GRAPHQL_JWT_PUBLIC_CERT', null);
+const JWT_CERTS_URL = getENV('GRAPHQL_JWT_CERTS_URL', null);
 
 interface JWTConfig {
   secret: string;
@@ -99,16 +99,16 @@ const getConfigs = async (): Promise<JWTConfig[]> => {
   }
   let configs: JWTConfig[] = [];
 
-  if (typeof JWT_SECRET !== 'undefined') {
+  if (JWT_SECRET) {
     configs.push({ secret: JWT_SECRET, options: { algorhitm: 'HS256' } });
   }
-  if (typeof JWT_PUBLIC_CERT !== 'undefined') {
+  if (JWT_PUBLIC_CERT) {
     configs.push({
       secret: JWT_PUBLIC_CERT,
       options: { algorhitm: 'RS256' }
     });
   }
-  if (typeof JWT_CERTS_URL !== 'undefined') {
+  if (JWT_CERTS_URL) {
     let res = await fetch(JWT_CERTS_URL);
     let content = await res.json();
     configs = configs.concat(

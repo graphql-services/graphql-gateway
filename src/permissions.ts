@@ -10,7 +10,8 @@ import { checkPermissions, getTokenFromRequest } from './jwt';
 import { getENV } from './env';
 
 const GRAPHQL_PERMISSIONS_PATH_PREFIX = getENV(
-  'GRAPHQL_PERMISSIONS_PATH_PREFIX'
+  'GRAPHQL_PERMISSIONS_PATH_PREFIX',
+  null
 );
 
 type FieldIteratorFn = (

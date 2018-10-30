@@ -29,7 +29,7 @@ const GRAPHQL_JWT_PERMISSIONS_ENABLED = getENV(
   'GRAPHQL_JWT_PERMISSIONS_ENABLED',
   false
 );
-const APOLLO_ENGINE_KEY: string = getENV('APOLLO_ENGINE_KEY');
+const APOLLO_ENGINE_KEY: string | null = getENV('APOLLO_ENGINE_KEY', null);
 
 export const start = async () => {
   let urls: string[] = getENVArray('GRAPHQL_URL');
