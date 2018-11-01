@@ -112,7 +112,7 @@ const fieldResolver = (prev, typeName, fieldName) => {
         )} (expected: ${JSON.stringify(diff.value2)})`
       );
     }
-    console.log(args,newArgs)
+    args = merge(args, newArgs);
 
     return prev(parent, args, ctx, info);
   };
