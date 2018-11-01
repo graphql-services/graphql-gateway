@@ -35,7 +35,7 @@ export const checkPermissionsAndAttributes = async (
   if (!permissions) {
     return { allowed: false };
   }
-  permissions = render(permissions, { token: userInfo });
+  permissions = render(permissions, { token: tokenInfo });
 
   return {
     allowed: checkACLPermissions(permissions, resource),
