@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@types/mustache": "^0.8.32",
     "acl-permissions": "0.0.8",
     "apollo-engine": "^1.1.2",
     "apollo-link-context": "^1.0.9",
@@ -13,7 +14,8 @@
     "graphql": "^14.0.2",
     "graphql-playground-middleware-express": "^1.7.3",
     "graphql-tools": "^3.1.1",
-    "jsonwebtoken": "^8.2.0"
+    "jsonwebtoken": "^8.2.0",
+    "mustache": "^3.0.0"
   },
   "scripts": {
     "start": "node index",

@@ -1,4 +1,4 @@
-export declare const checkPermissionsAndAttributes: (req: any, resource: string) => Promise<{
+export declare const checkPermissionsAndAttributes: (tokenInfo: any, resource: string) => Promise<{
     allowed: boolean;
     attributes?: {
         [key: string]: any;

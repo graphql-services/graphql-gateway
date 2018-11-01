@@ -6,6 +6,7 @@ import {
   checkPermissions as checkACLPermissions,
   getAttributes
 } from 'acl-permissions';
+import { render } from 'mustache';
 
 import { getENV } from './env';
 
@@ -21,19 +22,20 @@ interface JWTConfig {
 let _configsCache: JWTConfig[] | null = null;
 
 export const checkPermissionsAndAttributes = async (
-  req,
+  tokenInfo,
   resource: string
 ): Promise<{ allowed: boolean; attributes?: { [key: string]: any } }> => {
   if (!(await isEnabled())) {
     return { allowed: true };
   }
 
-  let info = await getTokenFromRequest(req);
+  const userInfo = tokenInfo.user || tokenInfo;
 
-  let permissions = info.permissions || (info.user && info.user.permissions);
+  let permissions = userInfo.permissions;
   if (!permissions) {
     return { allowed: false };
   }
+  permissions = render(permissions, { token: userInfo });
 
   return {
     allowed: checkACLPermissions(permissions, resource),

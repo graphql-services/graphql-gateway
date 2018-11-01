@@ -54,6 +54,26 @@ const getFullPath = (path: ResponsePath): string => {
   return parts.join(':');
 };
 
+const getFirstDifferentPath = (
+  object1: { [key: string]: any },
+  object2: { [key: string]: any },
+  parentPath: string | null = null
+): { path: string; value1: any; value2: any } | undefined => {
+  for (let key of Object.keys(object1)) {
+    let value1 = object1[key];
+    let value2 = object2[key];
+    let path = parentPath ? parentPath + '.' + key : key;
+    if (typeof value1 !== 'undefined' && typeof value2 !== 'undefined') {
+      if (typeof value1 === 'object') {
+        return getFirstDifferentPath(value1, value2, path);
+      } else if (value1 !== value2) {
+        return { value1, value2, path };
+      }
+    }
+  }
+  return undefined;
+};
+
 const fieldResolver = (prev, typeName, fieldName) => {
   return async (parent, args, ctx, info) => {
     let path = getFullPath(info.path);
@@ -65,30 +85,34 @@ const fieldResolver = (prev, typeName, fieldName) => {
       typePath = pathPrefix + ':' + typePath;
     }
 
-    let jwtInfo = await checkPermissionsAndAttributes(ctx.req, path);
-    let jwtTypeInfo = await checkPermissionsAndAttributes(ctx.req, typePath);
+    let tokenInfo = await getTokenFromRequest(ctx.req);
 
-    console.log('??', jwtInfo, jwtTypeInfo);
+    let jwtInfo = await checkPermissionsAndAttributes(tokenInfo, path);
+    let jwtTypeInfo = await checkPermissionsAndAttributes(tokenInfo, typePath);
+
     if (!jwtInfo.allowed && !jwtTypeInfo.allowed) {
-      // if (getENV('DEBUG', false)) {
-      const token = await getTokenFromRequest(ctx.req);
+      const token = tokenInfo;
       throw new Error(
         `access denied for '${path}' or '${typePath}' for ${JSON.stringify(
           token
         )}`
       );
-      // }
-      return null;
     }
 
-    args = merge(
-      args,
-      merge(
-        (jwtInfo && jwtInfo.attributes) || {},
-        (jwtTypeInfo && jwtTypeInfo.attributes) || {}
-      )
+    const newArgs = merge(
+      (jwtInfo && jwtInfo.attributes) || {},
+      (jwtTypeInfo && jwtTypeInfo.attributes) || {}
     );
-    console.log(args, path, typePath);
+
+    const diff = getFirstDifferentPath(args, newArgs);
+    if (diff) {
+      throw new Error(
+        `cannot fetch attribute '${diff.path}' with value ${JSON.stringify(
+          diff.value1
+        )} (expected: ${JSON.stringify(diff.value2)})`
+      );
+    }
+
     return prev(parent, args, ctx, info);
   };
 };
