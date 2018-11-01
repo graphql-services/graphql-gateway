@@ -5,8 +5,9 @@ import {
   GraphQLObjectType,
   ResponsePath
 } from 'graphql';
+const merge = require('deepmerge'); // https://github.com/KyleAMathews/deepmerge/pull/124
 
-import { checkPermissions, getTokenFromRequest } from './jwt';
+import { checkPermissionsAndAttributes, getTokenFromRequest } from './jwt';
 import { getENV } from './env';
 
 const GRAPHQL_PERMISSIONS_PATH_PREFIX = getENV(
@@ -64,28 +65,30 @@ const fieldResolver = (prev, typeName, fieldName) => {
       typePath = pathPrefix + ':' + typePath;
     }
 
-    let allowed = await checkPermissions(ctx.req, path);
-    let typeAllowed = await checkPermissions(ctx.req, typePath);
+    let jwtInfo = await checkPermissionsAndAttributes(ctx.req, path);
+    let jwtTypeInfo = await checkPermissionsAndAttributes(ctx.req, typePath);
 
-    if (!allowed || !typeAllowed) {
-      if (getENV('DEBUG', false)) {
-        const token = await getTokenFromRequest(ctx.req);
-        global.console.log(
-          `access denied for ${path} or ${typePath} for ${JSON.stringify(
-            token
-          )}`
-        );
-      }
+    console.log('??', jwtInfo, jwtTypeInfo);
+    if (!jwtInfo.allowed && !jwtTypeInfo.allowed) {
+      // if (getENV('DEBUG', false)) {
+      const token = await getTokenFromRequest(ctx.req);
+      throw new Error(
+        `access denied for '${path}' or '${typePath}' for ${JSON.stringify(
+          token
+        )}`
+      );
+      // }
       return null;
     }
 
-    // console.log(args, path, typePath);
-    // if (typePath === 'Query:jobs') {
-    //   args = {
-    //     ...args,
-    //     filter: { id: '2f473639-5f40-4f37-a9d5-630adf6691cf' }
-    //   };
-    // }
+    args = merge(
+      args,
+      merge(
+        (jwtInfo && jwtInfo.attributes) || {},
+        (jwtTypeInfo && jwtTypeInfo.attributes) || {}
+      )
+    );
+    console.log(args, path, typePath);
     return prev(parent, args, ctx, info);
   };
 };

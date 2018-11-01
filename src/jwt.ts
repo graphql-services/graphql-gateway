@@ -1,8 +1,13 @@
 const createError = require('http-errors');
 import * as bluebird from 'bluebird';
 import fetch from 'node-fetch';
-import { getENV } from './env';
 const jwt = bluebird.promisifyAll(require('jsonwebtoken'));
+import {
+  checkPermissions as checkACLPermissions,
+  getAttributes
+} from 'acl-permissions';
+
+import { getENV } from './env';
 
 const JWT_SECRET = getENV('GRAPHQL_JWT_SECRET', null);
 const JWT_PUBLIC_CERT = getENV('GRAPHQL_JWT_PUBLIC_CERT', null);
@@ -15,43 +20,25 @@ interface JWTConfig {
 
 let _configsCache: JWTConfig[] | null = null;
 
-export const checkPermissions = async (
+export const checkPermissionsAndAttributes = async (
   req,
   resource: string
-): Promise<Boolean> => {
+): Promise<{ allowed: boolean; attributes?: { [key: string]: any } }> => {
   if (!(await isEnabled())) {
-    return true;
+    return { allowed: true };
   }
 
   let info = await getTokenFromRequest(req);
 
-  if (!info.permissions && !info.user) {
-    return false;
-  }
-
-  let permissions = info.permissions || info.user.permissions;
-
+  let permissions = info.permissions || (info.user && info.user.permissions);
   if (!permissions) {
-    return false;
+    return { allowed: false };
   }
 
-  permissions = permissions.split('\n');
-
-  let valid = false;
-  for (let permission of permissions) {
-    let [_rule, _resource] = permission.split('|');
-    if (!_rule || !_resource) continue;
-    let regepx = new RegExp('^' + _resource.replace(/\*/g, '.*') + '$');
-    if (regepx.test(resource)) {
-      if (_rule == 'deny') {
-        return false;
-      } else {
-        valid = true;
-      }
-    }
-  }
-
-  return valid;
+  return {
+    allowed: checkACLPermissions(permissions, resource),
+    attributes: getAttributes(permissions, resource)
+  };
 };
 
 export const getTokenFromRequest = async req => {
@@ -102,12 +89,14 @@ const getConfigs = async (): Promise<JWTConfig[]> => {
   if (JWT_SECRET) {
     configs.push({ secret: JWT_SECRET, options: { algorhitm: 'HS256' } });
   }
+
   if (JWT_PUBLIC_CERT) {
     configs.push({
       secret: JWT_PUBLIC_CERT,
       options: { algorhitm: 'RS256' }
     });
   }
+
   if (JWT_CERTS_URL) {
     let res = await fetch(JWT_CERTS_URL);
     let content = await res.json();

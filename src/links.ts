@@ -7,7 +7,7 @@ import {
   parse,
   print
 } from 'graphql';
-import { exists, existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 let links = `
   directive @link(fetchField: String!,reference: String!) on FIELD_DEFINITION
