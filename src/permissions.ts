@@ -13,6 +13,7 @@ import {
   getDenialForRequest
 } from './jwt';
 import { getENV } from './env';
+import { log } from './logger';
 
 const GRAPHQL_PERMISSIONS_PATH_PREFIX = getENV(
   'GRAPHQL_PERMISSIONS_PATH_PREFIX',
@@ -123,7 +124,10 @@ const fieldResolver = (prev, typeName, fieldName) => {
         )} (expected: ${JSON.stringify(diff.value2)})`
       );
     }
+
+    log('applying args', newArgs, 'to', args);
     args = merge(args, newArgs);
+    log('args after apply', args);
 
     return prev(parent, args, ctx, info);
   };
