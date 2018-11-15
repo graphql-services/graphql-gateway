@@ -15,7 +15,8 @@
     "graphql-playground-middleware-express": "^1.7.3",
     "graphql-tools": "^3.1.1",
     "jsonwebtoken": "^8.2.0",
-    "mustache": "^3.0.0"
+    "mustache": "^3.0.0",
+    "node-fetch": "^2.3.0"
   },
   "scripts": {
     "start": "node index",
