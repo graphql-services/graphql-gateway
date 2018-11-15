@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@types/mustache": "^0.8.32",
-    "acl-permissions": "0.0.11",
+    "acl-permissions": "0.0.12",
     "apollo-engine": "^1.1.2",
     "apollo-link-context": "^1.0.9",
     "apollo-link-http": "^1.5.4",
