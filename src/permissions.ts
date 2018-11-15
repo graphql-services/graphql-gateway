@@ -7,7 +7,11 @@ import {
 } from 'graphql';
 const merge = require('deepmerge'); // https://github.com/KyleAMathews/deepmerge/pull/124
 
-import { checkPermissionsAndAttributes, getTokenFromRequest } from './jwt';
+import {
+  checkPermissionsAndAttributes,
+  getTokenFromRequest,
+  getDenialForRequest
+} from './jwt';
 import { getENV } from './env';
 
 const GRAPHQL_PERMISSIONS_PATH_PREFIX = getENV(
@@ -91,10 +95,17 @@ const fieldResolver = (prev, typeName, fieldName) => {
     let jwtTypeInfo = await checkPermissionsAndAttributes(tokenInfo, typePath);
 
     if (!jwtInfo.allowed && !jwtTypeInfo.allowed) {
-      const token = tokenInfo;
+      let denialReson: string | null = null;
+      if (!jwtInfo.allowed) {
+        const rule = getDenialForRequest(tokenInfo, path);
+        denialReson = rule && rule.toString();
+      } else if (!jwtTypeInfo.allowed) {
+        const rule = getDenialForRequest(tokenInfo, typePath);
+        denialReson = rule && rule.toString();
+      }
       throw new Error(
-        `access denied for '${path}' or '${typePath}' for ${JSON.stringify(
-          token
+        `access denied for '${path}' and '${typePath}'; failed rule ${denialReson}; token ${JSON.stringify(
+          tokenInfo
         )}`
       );
     }
