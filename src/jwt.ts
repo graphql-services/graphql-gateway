@@ -5,7 +5,8 @@ const jwt = bluebird.promisifyAll(require('jsonwebtoken'));
 import {
   checkPermissions as checkACLPermissions,
   getAttributes,
-  getDenialRule
+  getDenialRule,
+  PermissionRule
 } from 'acl-permissions';
 import { render } from 'mustache';
 
@@ -47,15 +48,14 @@ export const checkPermissionsAndAttributes = async (
 export const getDenialForRequest = (
   tokenInfo,
   resource: string
-): string | null => {
+): PermissionRule | null => {
   const userInfo = tokenInfo.user || tokenInfo;
 
   let permissions = userInfo.permissions;
   if (!permissions) {
     return null;
   }
-  const rule = getDenialRule(permissions, resource);
-  return rule.toString() || null;
+  return getDenialRule(permissions, resource);
 };
 
 export const getTokenFromRequest = async req => {
