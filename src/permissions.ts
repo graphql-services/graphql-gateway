@@ -5,11 +5,20 @@ import {
   GraphQLObjectType,
   ResponsePath
 } from 'graphql';
-import { mergeSchemas } from 'graphql-tools';
-import { checkPermissions, getTokenFromRequest } from './jwt';
+const merge = require('deepmerge'); // https://github.com/KyleAMathews/deepmerge/pull/124
 
-const GRAPHQL_PERMISSIONS_PATH_PREFIX =
-  process.env.GRAPHQL_PERMISSIONS_PATH_PREFIX || null;
+import {
+  checkPermissionsAndAttributes,
+  getTokenFromRequest,
+  getDenialForRequest
+} from './jwt';
+import { getENV } from './env';
+import { log } from './logger';
+
+const GRAPHQL_PERMISSIONS_PATH_PREFIX = getENV(
+  'GRAPHQL_PERMISSIONS_PATH_PREFIX',
+  null
+);
 
 type FieldIteratorFn = (
   fieldDef: GraphQLField<any, any>,
@@ -50,6 +59,26 @@ const getFullPath = (path: ResponsePath): string => {
   return parts.join(':');
 };
 
+const getFirstDifferentPath = (
+  object1: { [key: string]: any },
+  object2: { [key: string]: any },
+  parentPath: string | null = null
+): { path: string; value1: any; value2: any } | undefined => {
+  for (let key of Object.keys(object1)) {
+    let value1 = object1[key];
+    let value2 = object2[key];
+    let path = parentPath ? parentPath + '.' + key : key;
+    if (typeof value1 !== 'undefined' && typeof value2 !== 'undefined') {
+      if (typeof value1 === 'object') {
+        return getFirstDifferentPath(value1, value2, path);
+      } else if (value1 !== value2) {
+        return { value1, value2, path };
+      }
+    }
+  }
+  return undefined;
+};
+
 const fieldResolver = (prev, typeName, fieldName) => {
   return async (parent, args, ctx, info) => {
     let path = getFullPath(info.path);
@@ -61,21 +90,46 @@ const fieldResolver = (prev, typeName, fieldName) => {
       typePath = pathPrefix + ':' + typePath;
     }
 
-    let allowed = await checkPermissions(ctx.req, path);
-    let typeAllowed = await checkPermissions(ctx.req, typePath);
+    let tokenInfo = await getTokenFromRequest(ctx.req);
 
-    if (allowed && typeAllowed) {
-      return prev(parent, args, ctx, info);
-    }
+    let jwtInfo = await checkPermissionsAndAttributes(tokenInfo, path);
+    let jwtTypeInfo = await checkPermissionsAndAttributes(tokenInfo, typePath);
 
-    if (process.env.DEBUG) {
-      const token = await getTokenFromRequest(ctx.req);
-      console.log(
-        `access denied for ${path} or ${typePath} for ${JSON.stringify(token)}`
+    if (!jwtInfo.allowed && !jwtTypeInfo.allowed) {
+      let denialReson: string | null = null;
+      if (!jwtInfo.allowed) {
+        const rule = getDenialForRequest(tokenInfo, path);
+        denialReson = rule && rule.toString();
+      } else if (!jwtTypeInfo.allowed) {
+        const rule = getDenialForRequest(tokenInfo, typePath);
+        denialReson = rule && rule.toString();
+      }
+      throw new Error(
+        `access denied for '${path}' and '${typePath}'; failed rule ${denialReson}; token ${JSON.stringify(
+          tokenInfo
+        )}`
       );
     }
 
-    return null;
+    const newArgs = merge(
+      (jwtInfo && jwtInfo.attributes) || {},
+      (jwtTypeInfo && jwtTypeInfo.attributes) || {}
+    );
+
+    const diff = getFirstDifferentPath(args, newArgs);
+    if (diff) {
+      throw new Error(
+        `cannot fetch attribute '${diff.path}' with value ${JSON.stringify(
+          diff.value1
+        )} (expected: ${JSON.stringify(diff.value2)})`
+      );
+    }
+
+    log('applying args', newArgs, 'to', args);
+    args = merge(args, newArgs);
+    log('args after apply', args);
+
+    return prev(parent, args, ctx, info);
   };
 };
 

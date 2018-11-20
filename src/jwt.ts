@@ -2,10 +2,19 @@ const createError = require('http-errors');
 import * as bluebird from 'bluebird';
 import fetch from 'node-fetch';
 const jwt = bluebird.promisifyAll(require('jsonwebtoken'));
+import {
+  checkPermissions as checkACLPermissions,
+  getAttributes,
+  getDenialRule,
+  PermissionRule
+} from 'acl-permissions';
+import { render } from 'mustache';
 
-const JWT_SECRET = process.env.GRAPHQL_JWT_SECRET;
-const JWT_PUBLIC_CERT = process.env.GRAPHQL_JWT_PUBLIC_CERT;
-const JWT_CERTS_URL = process.env.GRAPHQL_JWT_CERTS_URL;
+import { getENV } from './env';
+
+const JWT_SECRET = getENV('GRAPHQL_JWT_SECRET', null);
+const JWT_PUBLIC_CERT = getENV('GRAPHQL_JWT_PUBLIC_CERT', null);
+const JWT_CERTS_URL = getENV('GRAPHQL_JWT_CERTS_URL', null);
 
 interface JWTConfig {
   secret: string;
@@ -14,43 +23,39 @@ interface JWTConfig {
 
 let _configsCache: JWTConfig[] | null = null;
 
-export const checkPermissions = async (
-  req,
+export const checkPermissionsAndAttributes = async (
+  tokenInfo,
   resource: string
-): Promise<Boolean> => {
+): Promise<{ allowed: boolean; attributes?: { [key: string]: any } }> => {
   if (!(await isEnabled())) {
-    return true;
+    return { allowed: true };
   }
 
-  let info = await getTokenFromRequest(req);
+  const userInfo = tokenInfo.user || tokenInfo;
 
-  if (!info.permissions && !info.user) {
-    return false;
-  }
-
-  let permissions = info.permissions || info.user.permissions;
-
+  let permissions = userInfo.permissions;
   if (!permissions) {
-    return false;
+    return { allowed: false };
   }
+  permissions = render(permissions, { token: tokenInfo });
 
-  permissions = permissions.split('\n');
+  return {
+    allowed: checkACLPermissions(permissions, resource),
+    attributes: getAttributes(permissions, resource)
+  };
+};
 
-  let valid = false;
-  for (let permission of permissions) {
-    let [_rule, _resource] = permission.split('|');
-    if (!_rule || !_resource) continue;
-    let regepx = new RegExp('^' + _resource.replace(/\*/g, '.*') + '$');
-    if (regepx.test(resource)) {
-      if (_rule == 'deny') {
-        return false;
-      } else {
-        valid = true;
-      }
-    }
+export const getDenialForRequest = (
+  tokenInfo,
+  resource: string
+): PermissionRule | null => {
+  const userInfo = tokenInfo.user || tokenInfo;
+
+  let permissions = userInfo.permissions;
+  if (!permissions) {
+    return null;
   }
-
-  return valid;
+  return getDenialRule(permissions, resource);
 };
 
 export const getTokenFromRequest = async req => {
@@ -98,16 +103,18 @@ const getConfigs = async (): Promise<JWTConfig[]> => {
   }
   let configs: JWTConfig[] = [];
 
-  if (typeof JWT_SECRET !== 'undefined') {
+  if (JWT_SECRET) {
     configs.push({ secret: JWT_SECRET, options: { algorhitm: 'HS256' } });
   }
-  if (typeof JWT_PUBLIC_CERT !== 'undefined') {
+
+  if (JWT_PUBLIC_CERT) {
     configs.push({
       secret: JWT_PUBLIC_CERT,
       options: { algorhitm: 'RS256' }
     });
   }
-  if (typeof JWT_CERTS_URL !== 'undefined') {
+
+  if (JWT_CERTS_URL) {
     let res = await fetch(JWT_CERTS_URL);
     let content = await res.json();
     configs = configs.concat(

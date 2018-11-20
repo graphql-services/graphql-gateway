@@ -1,2 +1,1 @@
-import { GraphQLSchema } from 'graphql';
-export declare const get: (urls: string[]) => Promise<GraphQLSchema | null>;
+export declare const getSchemaFromURLS: (urls: string[]) => Promise<any>;
