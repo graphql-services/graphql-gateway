@@ -11,8 +11,11 @@ import { addPermissionsToSchema } from './permissions';
 import { startWithApolloEngine } from './apollo-engine';
 import { applyLinksToSchema } from './links';
 import { getENV, getENVArray } from './env';
+import { healthcheck } from './healthcheck';
 
 const app = express();
+
+app.use(healthcheck);
 
 app.use(
   cors({
