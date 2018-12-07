@@ -7,15 +7,19 @@ import {
   parse,
   print
 } from 'graphql';
-import { existsSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
+import { sync as globSync } from 'glob';
+import { log } from './logger';
 
-let links = `
+const loadTypes = (pattern: string): string[] => {
+  const paths = globSync(pattern).filter(x => x.indexOf('node_modules') === -1);
+  return paths.map(path => readFileSync(path, 'utf8'));
+};
+
+let links =
+  `
   directive @link(fetchField: String!,reference: String!) on FIELD_DEFINITION
-`;
-
-if (existsSync('./links.graphql')) {
-  links += readFileSync('./links.graphql').toString();
-}
+` + loadTypes('./**/links.graphql').join('\n');
 
 interface LinkMapItem {
   type: string;
