@@ -9,6 +9,10 @@ import {
   PermissionRule
 } from 'acl-permissions';
 import { render } from 'mustache';
+import { ExpirationStrategy, MemoryStorage } from 'node-ts-cache';
+
+const tokenInfoCache = new ExpirationStrategy(new MemoryStorage());
+const permissionCache = new ExpirationStrategy(new MemoryStorage());
 
 import { getENV } from './env';
 
@@ -23,12 +27,23 @@ interface JWTConfig {
 
 let _configsCache: JWTConfig[] | null = null;
 
+export type CheckPermissionsResult = {
+  allowed: boolean;
+  attributes?: { [key: string]: any };
+};
 export const checkPermissionsAndAttributes = async (
   tokenInfo,
   resource: string
-): Promise<{ allowed: boolean; attributes?: { [key: string]: any } }> => {
+): Promise<CheckPermissionsResult> => {
   if (!(await isEnabled())) {
     return { allowed: true };
+  }
+
+  const cacheKey = `${tokenInfo._token}__${resource}`;
+
+  const cacheResult = await permissionCache.getItem(cacheKey);
+  if (cacheResult) {
+    return cacheResult as CheckPermissionsResult;
   }
 
   const userInfo = tokenInfo.user || tokenInfo;
@@ -39,10 +54,12 @@ export const checkPermissionsAndAttributes = async (
   }
   permissions = render(permissions, { token: tokenInfo });
 
-  return {
+  const res = {
     allowed: checkACLPermissions(permissions, resource),
     attributes: getAttributes(permissions, resource)
   };
+  await permissionCache.setItem(cacheKey, res, { ttl: 300 });
+  return res;
 };
 
 export const getDenialForRequest = (
@@ -73,6 +90,17 @@ export const getTokenFromRequest = async req => {
   }
 
   token = token.replace('Bearer ', '');
+  const res = await extractInfoFromToken(token);
+  res._token = token;
+  req.jwt_cache = res;
+  return res;
+};
+
+const extractInfoFromToken = async (token: string) => {
+  const cacheRes = await tokenInfoCache.getItem(token);
+  if (cacheRes) {
+    return cacheRes;
+  }
   try {
     let configs = await getConfigs();
 
@@ -80,7 +108,7 @@ export const getTokenFromRequest = async req => {
     for (let config of configs) {
       try {
         let res = await jwt.verifyAsync(token, config.secret, config.options);
-        req.jwt_cache = res;
+        await tokenInfoCache.setItem(token, res, { ttl: 300 });
         return res;
       } catch (e) {
         latestError = e;
