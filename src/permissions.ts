@@ -84,9 +84,9 @@ const fieldResolver = (prev, typeName, fieldName) => {
   return async (parent, args, ctx, info: GraphQLResolveInfo) => {
     let path = getFullPath(info.path);
 
-    path = `${info.operation.operation}:${path}`;
-    // if (info.operation.name) {
-    // }
+    if (info.operation.name) {
+      path = `${info.operation.name.value}:${path}`;
+    }
 
     let typePath = `${typeName}:${fieldName}`;
 

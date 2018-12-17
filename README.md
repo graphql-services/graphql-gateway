@@ -125,6 +125,17 @@ allow|*
 deny|User:secretField
 ```
 
+Named queries/mutations:
+
+```
+
+# for following query
+# query myBlahQuery { users { id username } }
+
+allow|myBlahQuery:*
+allow|myBlahQuery:users
+```
+
 ### Global ACL resource prefix
 
 You can also enforce prefix for all resources by specifying `PERMISSIONS_PATH_PREFIX=...` in environment variables.
