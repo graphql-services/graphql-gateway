@@ -82,45 +82,46 @@ const getFirstDifferentPath = (
 
 const fieldResolver = (prev, typeName, fieldName) => {
   return async (parent, args, ctx, info: GraphQLResolveInfo) => {
-    let path = getFullPath(info.path);
+    let paths: string[] = [];
+
+    const fullPath = getFullPath(info.path);
+    paths.push(fullPath);
 
     if (info.operation.name) {
-      path = `${info.operation.name.value}:${path}`;
+      paths.push(`${info.operation.name.value}:${fullPath}`);
     }
 
-    let typePath = `${typeName}:${fieldName}`;
+    paths.push(`${typeName}:${fieldName}`);
 
     let pathPrefix = GRAPHQL_PERMISSIONS_PATH_PREFIX;
     if (pathPrefix) {
-      path = pathPrefix + ':' + path;
-      typePath = pathPrefix + ':' + typePath;
+      paths = paths.map(x => pathPrefix + ':' + x);
     }
 
     let tokenInfo = await getTokenFromRequest(ctx.req);
 
-    let jwtInfo = await checkPermissionsAndAttributes(tokenInfo, path);
-    let jwtTypeInfo = await checkPermissionsAndAttributes(tokenInfo, typePath);
+    const results = await Promise.all(
+      paths.map(path => checkPermissionsAndAttributes(tokenInfo, path))
+    );
+    // let jwtInfo = await checkPermissionsAndAttributes(tokenInfo, path);
+    // let jwtTypeInfo = await checkPermissionsAndAttributes(tokenInfo, typePath);
 
-    if (!jwtInfo.allowed && !jwtTypeInfo.allowed) {
+    const allowedRules = results.filter(r => r.allowed);
+    if (allowedRules.length === 0) {
+      const firstDeniedRule = results[0];
       let denialReson: string | null = null;
-      if (!jwtInfo.allowed) {
-        const rule = getDenialForRequest(tokenInfo, path);
-        denialReson = rule && rule.toString();
-      } else if (!jwtTypeInfo.allowed) {
-        const rule = getDenialForRequest(tokenInfo, typePath);
-        denialReson = rule && rule.toString();
-      }
+      const rule = getDenialForRequest(tokenInfo, firstDeniedRule.resource);
+      denialReson = rule && rule.toString();
       throw new Error(
-        `access denied for '${path}' and '${typePath}'; failed rule ${denialReson}; token ${JSON.stringify(
+        `access denied for '${results
+          .map(r => r.resource)
+          .join("','")}'; failed rule ${denialReson}; token ${JSON.stringify(
           tokenInfo
         )}`
       );
     }
 
-    const newArgs = merge(
-      (jwtInfo && jwtInfo.attributes) || {},
-      (jwtTypeInfo && jwtTypeInfo.attributes) || {}
-    );
+    const newArgs = merge(...results.map(r => r.attributes || {}));
 
     const diff = getFirstDifferentPath(args, newArgs);
     if (diff) {

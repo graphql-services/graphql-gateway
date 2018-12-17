@@ -29,6 +29,7 @@ let _configsCache: JWTConfig[] | null = null;
 
 export type CheckPermissionsResult = {
   allowed: boolean;
+  resource: string;
   attributes?: { [key: string]: any };
 };
 export const checkPermissionsAndAttributes = async (
@@ -36,7 +37,7 @@ export const checkPermissionsAndAttributes = async (
   resource: string
 ): Promise<CheckPermissionsResult> => {
   if (!(await isEnabled())) {
-    return { allowed: true };
+    return { resource, allowed: true };
   }
 
   const cacheKey = `${tokenInfo._token}__${resource}`;
@@ -50,11 +51,12 @@ export const checkPermissionsAndAttributes = async (
 
   let permissions = userInfo.permissions;
   if (!permissions) {
-    return { allowed: false };
+    return { resource, allowed: false };
   }
   permissions = render(permissions, { token: tokenInfo });
 
   const res = {
+    resource,
     allowed: checkACLPermissions(permissions, resource),
     attributes: getAttributes(permissions, resource)
   };
