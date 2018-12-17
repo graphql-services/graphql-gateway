@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@types/glob": "^7.1.1",
+    "@types/graphql": "^14.0.3",
     "@types/mustache": "^0.8.32",
     "acl-permissions": "0.0.13",
     "apollo-engine": "^1.1.2",

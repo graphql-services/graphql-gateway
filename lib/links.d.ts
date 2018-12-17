@@ -1,1 +1,2 @@
-export declare const applyLinksToSchema: (schema: any) => any;
+import { GraphQLSchema } from 'graphql';
+export declare const applyLinksToSchema: (schema: GraphQLSchema) => GraphQLSchema;

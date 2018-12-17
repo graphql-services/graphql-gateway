@@ -3,7 +3,8 @@ import {
   getNamedType,
   GraphQLField,
   GraphQLObjectType,
-  ResponsePath
+  ResponsePath,
+  GraphQLResolveInfo
 } from 'graphql';
 const merge = require('deepmerge'); // https://github.com/KyleAMathews/deepmerge/pull/124
 
@@ -46,7 +47,7 @@ const forEachField = (schema: GraphQLSchema, fn: FieldIteratorFn): void => {
 const getFullPath = (path: ResponsePath): string => {
   let parts: string[] = [];
 
-  let currentPath = path;
+  let currentPath: ResponsePath | undefined = path;
   do {
     if (currentPath) {
       if (typeof currentPath.key === 'string') {
@@ -80,8 +81,13 @@ const getFirstDifferentPath = (
 };
 
 const fieldResolver = (prev, typeName, fieldName) => {
-  return async (parent, args, ctx, info) => {
+  return async (parent, args, ctx, info: GraphQLResolveInfo) => {
     let path = getFullPath(info.path);
+
+    path = `${info.operation.operation}:${path}`;
+    // if (info.operation.name) {
+    // }
+
     let typePath = `${typeName}:${fieldName}`;
 
     let pathPrefix = GRAPHQL_PERMISSIONS_PATH_PREFIX;
@@ -134,7 +140,7 @@ const fieldResolver = (prev, typeName, fieldName) => {
 };
 
 export const addPermissionsToSchema = (schema: GraphQLSchema) => {
-  forEachField(schema, (field, typeName, fieldName) => {
+  forEachField(schema, (field: GraphQLField<any, any>, typeName, fieldName) => {
     if (field.resolve) {
       const prev = field.resolve;
       field.resolve = fieldResolver(prev, typeName, fieldName);
