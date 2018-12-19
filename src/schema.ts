@@ -7,6 +7,12 @@ import {
   makeRemoteExecutableSchema,
   introspectSchema
 } from 'graphql-tools';
+import { getENV } from './env';
+
+const forwardedHeaders = getENV(
+  'GRAPHQL_FORWARD_HEADERS',
+  'authorization'
+).split(',');
 
 export const getSchemaFromURLS = async (
   urls: string[]
@@ -28,10 +34,16 @@ const getRemoteSchema = async (url: string): Promise<GraphQLSchema> => {
   const link = setContext((request, previousContext) => {
     const req =
       previousContext.graphqlContext && previousContext.graphqlContext.req;
-    return {
-      headers: {
-        Authorization: req && req.headers.authorization
+
+    const headers = {};
+    for (const headerName of forwardedHeaders) {
+      if (req && req.headers[headerName]) {
+        headers[headerName] = req.headers[headerName];
       }
+    }
+
+    return {
+      headers
     };
   }).concat(http);
 

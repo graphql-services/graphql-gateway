@@ -46,6 +46,12 @@ GRAPHQL_URL_1=https://api.graphloc.com/graphql
 
 will start gateway with two merged schemas.
 
+Gateway support headers forwarding to merged APIs, by default it forwards `authorization` headers, but you can specify list of your own by provising environment variable:
+
+```
+GRAPHQL_FORWARD_HEADERS=authorization,custom-header1,... (comma separated list,default: authorization)
+```
+
 ## JWT token validation
 
 Gateway can accept `Authorization: Bearer ...` header with JWT token and verify it using secret or public certificate. Configuration is using following environment varialbes:
