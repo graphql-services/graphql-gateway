@@ -17,11 +17,7 @@ const forwardedHeaders = getENV(
 export const getSchemaFromURLS = async (
   urls: string[]
 ): Promise<GraphQLSchema | null> => {
-  let schemas: GraphQLSchema[] = [];
-  for (let url of urls) {
-    let schema = await getRemoteSchema(url);
-    schemas.push(schema);
-  }
+  const schemas = await Promise.all(urls.map(url => getRemoteSchema(url)));
 
   return mergeSchemas({
     schemas
