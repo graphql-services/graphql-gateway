@@ -115,9 +115,7 @@ const fieldResolver = (prev, typeName, fieldName) => {
       throw new Error(
         `access denied for '${results
           .map(r => r.resource)
-          .join("','")}'; failed rule ${denialReson}; token ${JSON.stringify(
-          tokenInfo
-        )}`
+          .join("','")}'; failed rule ${denialReson}`
       );
     }
 
