@@ -7,7 +7,26 @@ export const startWithApolloEngine = (
   port: string
 ) => {
   const engine = new ApolloEngine({
-    apiKey: apiKey
+    apiKey: apiKey,
+    origins: [
+      {
+        supportsBatch: true,
+        requestTimeout: '60s'
+      }
+    ],
+
+    // Resize the default in-memory cache.
+    stores: [
+      {
+        name: 'inMemEmbeddedCache',
+        inMemory: {
+          cacheSize: 104857600 // 100 MB; defaults to 50MB.
+        }
+      }
+    ],
+    queryCache: {
+      publicFullQueryStore: 'inMemEmbeddedCache'
+    }
   });
 
   engine.listen({ port, expressApp }, () => {

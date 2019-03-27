@@ -1,17 +1,18 @@
-import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
+import * as express from 'express';
+
+import { getENV, getENVArray } from './env';
+
+import { addPermissionsToSchema } from './permissions';
+import { applyLinksToSchema } from './links';
+import expressPlayground from 'graphql-playground-middleware-express';
+import { getSchemaFromURLS } from './schema';
 // const { graphqlExpress } = require('apollo-server-express');
 import { graphqlExpress } from 'apollo-server-express';
-import expressPlayground from 'graphql-playground-middleware-express';
-import { mergeSchemas } from 'graphql-tools';
-
-import { getSchemaFromURLS } from './schema';
-import { addPermissionsToSchema } from './permissions';
-import { startWithApolloEngine } from './apollo-engine';
-import { applyLinksToSchema } from './links';
-import { getENV, getENVArray } from './env';
 import { healthcheck } from './healthcheck';
+import { mergeSchemas } from 'graphql-tools';
+import { startWithApolloEngine } from './apollo-engine';
 
 const app = express();
 
@@ -57,7 +58,12 @@ export const start = async () => {
     GRAPHQL_PATH,
     bodyParser.json(),
     graphqlExpress(req => {
-      return { schema, context: { req }, tracing: true };
+      return {
+        schema,
+        context: { req },
+        tracing: true,
+        cacheControl: { defaultMaxAge: 3000 }
+      };
     })
   );
   if (!GRAPHIQL_DISABLED) {
