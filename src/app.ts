@@ -33,6 +33,10 @@ const GRAPHQL_JWT_PERMISSIONS_ENABLED = getENV(
   'GRAPHQL_JWT_PERMISSIONS_ENABLED',
   false
 );
+const GRAPHQL_CACHE_DEFAULT_MAX_AGE = getENV(
+  'GRAPHQL_CACHE_DEFAULT_MAX_AGE',
+  null
+);
 const APOLLO_ENGINE_KEY: string | null = getENV('APOLLO_ENGINE_KEY', null);
 
 export const start = async () => {
@@ -62,7 +66,9 @@ export const start = async () => {
         schema,
         context: { req },
         tracing: true,
-        cacheControl: { defaultMaxAge: 5 }
+        cacheControl: GRAPHQL_CACHE_DEFAULT_MAX_AGE
+          ? { defaultMaxAge: parseInt(GRAPHQL_CACHE_DEFAULT_MAX_AGE) }
+          : undefined
       };
     })
   );
