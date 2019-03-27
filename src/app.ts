@@ -62,7 +62,7 @@ export const start = async () => {
         schema,
         context: { req },
         tracing: true,
-        cacheControl: { defaultMaxAge: 3000 }
+        cacheControl: { defaultMaxAge: 5 }
       };
     })
   );
