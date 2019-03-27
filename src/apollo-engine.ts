@@ -14,6 +14,16 @@ export const startWithApolloEngine = (
         requestTimeout: '60s'
       }
     ],
+
+    // Resize the default in-memory cache.
+    stores: [
+      {
+        name: 'inMemEmbeddedCache'
+        // inMemory: {
+        //   cacheSize: 104857600 // 100 MB; defaults to 50MB.
+        // }
+      }
+    ],
     queryCache: {
       publicFullQueryStore: 'inMemEmbeddedCache'
     }
