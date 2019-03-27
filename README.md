@@ -64,7 +64,7 @@ You can provide all of these options and if one of it pass, the token is conside
 
 ## Caching
 
-You can specify GRAPHQL_CACHE_DEFAULT_MAX_AGE (in seconds) to enable apollo-engine caching.
+You can specify `GRAPHQL_CACHE_DEFAULT_MAX_AGE=5` (in seconds) to enable apollo-engine caching.
 
 ## ACL permissions on field level
 
