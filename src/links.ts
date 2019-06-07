@@ -9,7 +9,6 @@ import {
 } from 'graphql';
 import { readFileSync } from 'fs';
 import { sync as globSync } from 'glob';
-import { log } from './logger';
 
 const loadTypes = (pattern: string): string[] => {
   const paths = globSync(pattern).filter(x => x.indexOf('node_modules') === -1);

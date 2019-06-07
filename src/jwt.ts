@@ -15,6 +15,7 @@ const tokenInfoCache = new ExpirationStrategy(new MemoryStorage());
 const permissionCache = new ExpirationStrategy(new MemoryStorage());
 
 import { getENV } from './env';
+import { log } from './logger';
 
 const JWT_SECRET = getENV('GRAPHQL_JWT_SECRET', null);
 const JWT_PUBLIC_CERT = getENV('GRAPHQL_JWT_PUBLIC_CERT', null);
@@ -29,6 +30,7 @@ let _configsCache: JWTConfig[] | null = null;
 
 export type CheckPermissionsResult = {
   allowed: boolean;
+  resource: string;
   attributes?: { [key: string]: any };
 };
 export const checkPermissionsAndAttributes = async (
@@ -36,7 +38,7 @@ export const checkPermissionsAndAttributes = async (
   resource: string
 ): Promise<CheckPermissionsResult> => {
   if (!(await isEnabled())) {
-    return { allowed: true };
+    return { resource, allowed: true };
   }
 
   const cacheKey = `${tokenInfo._token}__${resource}`;
@@ -46,19 +48,25 @@ export const checkPermissionsAndAttributes = async (
     return cacheResult as CheckPermissionsResult;
   }
 
+  log(`checking permissions and attributes for resource ${resource}`);
+
   const userInfo = tokenInfo.user || tokenInfo;
 
   let permissions = userInfo.permissions;
   if (!permissions) {
-    return { allowed: false };
+    return { resource, allowed: false };
   }
   permissions = render(permissions, { token: tokenInfo });
 
   const res = {
+    resource,
     allowed: checkACLPermissions(permissions, resource),
     attributes: getAttributes(permissions, resource)
   };
   await permissionCache.setItem(cacheKey, res, { ttl: 300 });
+
+  log(`checked permissions and attributes for resource ${resource}`);
+
   return res;
 };
 
@@ -83,6 +91,7 @@ export const getTokenFromRequest = async req => {
   if (req.jwt_cache) {
     return req.jwt_cache;
   }
+
   let token = req.query.access_token || req.headers.authorization;
 
   if (!token) {
@@ -102,6 +111,8 @@ const extractInfoFromToken = async (token: string) => {
     return cacheRes;
   }
   try {
+    log(`extracting information from access token`);
+
     let configs = await getConfigs();
 
     let latestError = null;
@@ -109,11 +120,13 @@ const extractInfoFromToken = async (token: string) => {
       try {
         let res = await jwt.verifyAsync(token, config.secret, config.options);
         await tokenInfoCache.setItem(token, res, { ttl: 300 });
+        log(`extracted information from access token`);
         return res;
       } catch (e) {
         latestError = e;
       }
     }
+
     throw latestError;
   } catch (e) {
     throw createError(401, e.message);
@@ -129,6 +142,9 @@ const getConfigs = async (): Promise<JWTConfig[]> => {
   if (_configsCache) {
     return _configsCache;
   }
+
+  log(`collecting JWT configuration`);
+
   let configs: JWTConfig[] = [];
 
   if (JWT_SECRET) {
@@ -143,8 +159,12 @@ const getConfigs = async (): Promise<JWTConfig[]> => {
   }
 
   if (JWT_CERTS_URL) {
+    log(`fetching certificates from ${JWT_CERTS_URL}`);
+
     let res = await fetch(JWT_CERTS_URL);
     let content = await res.json();
+
+    log(`fetched certificates from ${JWT_CERTS_URL}`);
     configs = configs.concat(
       content.map(cert => {
         return {
@@ -154,6 +174,8 @@ const getConfigs = async (): Promise<JWTConfig[]> => {
       })
     );
   }
+
+  log(`JWT config collected ${JSON.stringify(configs)}`);
 
   _configsCache = configs;
   return configs;

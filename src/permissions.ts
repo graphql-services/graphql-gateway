@@ -3,7 +3,8 @@ import {
   getNamedType,
   GraphQLField,
   GraphQLObjectType,
-  ResponsePath
+  ResponsePath,
+  GraphQLResolveInfo
 } from 'graphql';
 const merge = require('deepmerge'); // https://github.com/KyleAMathews/deepmerge/pull/124
 
@@ -46,7 +47,7 @@ const forEachField = (schema: GraphQLSchema, fn: FieldIteratorFn): void => {
 const getFullPath = (path: ResponsePath): string => {
   let parts: string[] = [];
 
-  let currentPath = path;
+  let currentPath: ResponsePath | undefined = path;
   do {
     if (currentPath) {
       if (typeof currentPath.key === 'string') {
@@ -80,41 +81,45 @@ const getFirstDifferentPath = (
 };
 
 const fieldResolver = (prev, typeName, fieldName) => {
-  return async (parent, args, ctx, info) => {
-    let path = getFullPath(info.path);
-    let typePath = `${typeName}:${fieldName}`;
+  return async (parent, args, ctx, info: GraphQLResolveInfo) => {
+    let paths: string[] = [];
+
+    const fullPath = getFullPath(info.path);
+    paths.push(fullPath);
+
+    if (info.operation.name) {
+      paths.push(`${info.operation.name.value}:${fullPath}`);
+    }
+
+    paths.push(`${typeName}:${fieldName}`);
 
     let pathPrefix = GRAPHQL_PERMISSIONS_PATH_PREFIX;
     if (pathPrefix) {
-      path = pathPrefix + ':' + path;
-      typePath = pathPrefix + ':' + typePath;
+      paths = paths.map(x => pathPrefix + ':' + x);
     }
 
     let tokenInfo = await getTokenFromRequest(ctx.req);
 
-    let jwtInfo = await checkPermissionsAndAttributes(tokenInfo, path);
-    let jwtTypeInfo = await checkPermissionsAndAttributes(tokenInfo, typePath);
+    const results = await Promise.all(
+      paths.map(path => checkPermissionsAndAttributes(tokenInfo, path))
+    );
+    // let jwtInfo = await checkPermissionsAndAttributes(tokenInfo, path);
+    // let jwtTypeInfo = await checkPermissionsAndAttributes(tokenInfo, typePath);
 
-    if (!jwtInfo.allowed && !jwtTypeInfo.allowed) {
+    const allowedRules = results.filter(r => r.allowed);
+    if (allowedRules.length === 0) {
+      const firstDeniedRule = results[0];
       let denialReson: string | null = null;
-      if (!jwtInfo.allowed) {
-        const rule = getDenialForRequest(tokenInfo, path);
-        denialReson = rule && rule.toString();
-      } else if (!jwtTypeInfo.allowed) {
-        const rule = getDenialForRequest(tokenInfo, typePath);
-        denialReson = rule && rule.toString();
-      }
+      const rule = getDenialForRequest(tokenInfo, firstDeniedRule.resource);
+      denialReson = rule && rule.toString();
       throw new Error(
-        `access denied for '${path}' and '${typePath}'; failed rule ${denialReson}; token ${JSON.stringify(
-          tokenInfo
-        )}`
+        `access denied for '${results
+          .map(r => r.resource)
+          .join("','")}'; failed rule ${denialReson}`
       );
     }
 
-    const newArgs = merge(
-      (jwtInfo && jwtInfo.attributes) || {},
-      (jwtTypeInfo && jwtTypeInfo.attributes) || {}
-    );
+    const newArgs = merge(...results.map(r => r.attributes || {}));
 
     const diff = getFirstDifferentPath(args, newArgs);
     if (diff) {
@@ -134,7 +139,7 @@ const fieldResolver = (prev, typeName, fieldName) => {
 };
 
 export const addPermissionsToSchema = (schema: GraphQLSchema) => {
-  forEachField(schema, (field, typeName, fieldName) => {
+  forEachField(schema, (field: GraphQLField<any, any>, typeName, fieldName) => {
     if (field.resolve) {
       const prev = field.resolve;
       field.resolve = fieldResolver(prev, typeName, fieldName);

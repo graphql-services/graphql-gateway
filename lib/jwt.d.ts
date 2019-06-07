@@ -1,6 +1,7 @@
 import { PermissionRule } from 'acl-permissions';
 export declare type CheckPermissionsResult = {
     allowed: boolean;
+    resource: string;
     attributes?: {
         [key: string]: any;
     };

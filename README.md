@@ -46,6 +46,12 @@ GRAPHQL_URL_1=https://api.graphloc.com/graphql
 
 will start gateway with two merged schemas.
 
+Gateway support headers forwarding to merged APIs, by default it forwards `authorization` headers, but you can specify list of your own by provising environment variable:
+
+```
+GRAPHQL_FORWARD_HEADERS=authorization,custom-header1,... (comma separated list,default: authorization)
+```
+
 ## JWT token validation
 
 Gateway can accept `Authorization: Bearer ...` header with JWT token and verify it using secret or public certificate. Configuration is using following environment varialbes:
@@ -55,6 +61,10 @@ Gateway can accept `Authorization: Bearer ...` header with JWT token and verify 
 - `GRAPHQL_JWT_CERTS_URL` - specify url where public certificates could be downloaded (array of `{key: string}` is expected)
 
 You can provide all of these options and if one of it pass, the token is considered valid.
+
+## Caching
+
+You can specify `GRAPHQL_CACHE_DEFAULT_MAX_AGE=5` (in seconds) to enable apollo-engine caching.
 
 ## ACL permissions on field level
 
@@ -123,6 +133,17 @@ allow|post:*
 # allow access to any query except User.secretField `{ query { users { id username secretField} } }`
 allow|*
 deny|User:secretField
+```
+
+Named queries/mutations:
+
+```
+
+# for following query
+# query myBlahQuery { users { id username } }
+
+allow|myBlahQuery:*
+allow|myBlahQuery:users
 ```
 
 ### Global ACL resource prefix

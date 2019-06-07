@@ -1,17 +1,18 @@
-import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cors from 'cors';
+import * as express from 'express';
+
+import { getENV, getENVArray } from './env';
+
+import { addPermissionsToSchema } from './permissions';
+import { applyLinksToSchema } from './links';
+import expressPlayground from 'graphql-playground-middleware-express';
+import { getSchemaFromURLS } from './schema';
 // const { graphqlExpress } = require('apollo-server-express');
 import { graphqlExpress } from 'apollo-server-express';
-import expressPlayground from 'graphql-playground-middleware-express';
-import { mergeSchemas } from 'graphql-tools';
-
-import { getSchemaFromURLS } from './schema';
-import { addPermissionsToSchema } from './permissions';
-import { startWithApolloEngine } from './apollo-engine';
-import { applyLinksToSchema } from './links';
-import { getENV, getENVArray } from './env';
 import { healthcheck } from './healthcheck';
+import { mergeSchemas } from 'graphql-tools';
+import { startWithApolloEngine } from './apollo-engine';
 
 const app = express();
 
@@ -31,6 +32,10 @@ const GRAPHIQL_DISABLED = getENV('GRAPHIQL_DISABLED', false);
 const GRAPHQL_JWT_PERMISSIONS_ENABLED = getENV(
   'GRAPHQL_JWT_PERMISSIONS_ENABLED',
   false
+);
+const GRAPHQL_CACHE_DEFAULT_MAX_AGE = getENV(
+  'GRAPHQL_CACHE_DEFAULT_MAX_AGE',
+  null
 );
 const APOLLO_ENGINE_KEY: string | null = getENV('APOLLO_ENGINE_KEY', null);
 
@@ -57,7 +62,14 @@ export const start = async () => {
     GRAPHQL_PATH,
     bodyParser.json(),
     graphqlExpress(req => {
-      return { schema, context: { req }, tracing: true };
+      return {
+        schema,
+        context: { req },
+        tracing: true,
+        cacheControl: GRAPHQL_CACHE_DEFAULT_MAX_AGE
+          ? { defaultMaxAge: parseInt(GRAPHQL_CACHE_DEFAULT_MAX_AGE) }
+          : undefined
+      };
     })
   );
   if (!GRAPHIQL_DISABLED) {
