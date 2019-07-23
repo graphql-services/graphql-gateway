@@ -65,6 +65,11 @@ func main() {
 	// add the playground endpoint to the router
 	http.HandleFunc("/graphql", withAuthorization(gw.PlaygroundHandler))
 
+	http.HandleFunc("/healthcheck", func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(200)
+		res.Write([]byte("OK"))
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "80"
