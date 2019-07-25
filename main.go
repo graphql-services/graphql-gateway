@@ -63,7 +63,10 @@ func main() {
 	}
 
 	// add the playground endpoint to the router
-	http.HandleFunc("/graphql", withAuthorization(gw.PlaygroundHandler))
+	http.HandleFunc("/graphql", func(res http.ResponseWriter, req *http.Request) {
+		res.Header().Set("Content-Type", "application/json")
+		withAuthorization(gw.PlaygroundHandler)(res, req)
+	})
 
 	http.HandleFunc("/healthcheck", func(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(200)
