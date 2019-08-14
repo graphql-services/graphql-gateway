@@ -11,6 +11,7 @@ getENV = (name, defaultValue) => {
 
   return value;
 };
+module.exports.getENV = getENV;
 
 module.exports.getENVArray = prefix => {
   let result = [];

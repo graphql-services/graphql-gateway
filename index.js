@@ -1,4 +1,4 @@
-const { getENVArray } = require('./env');
+const { getENVArray, getENV } = require('./env');
 
 const { ApolloServer } = require('apollo-server');
 const { ApolloGateway, RemoteGraphQLDataSource } = require('@apollo/gateway');
@@ -30,8 +30,9 @@ const gateway = new ApolloGateway({
   const { schema, executor } = await gateway.load();
 
   const server = new ApolloServer({ schema, executor });
+  const PORT = getENV('PORT', '80');
 
-  server.listen().then(({ url }) => {
+  server.listen({ port: PORT }).then(({ url }) => {
     console.log(`🚀 Server ready at ${url}`);
   });
 })();
