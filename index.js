@@ -17,7 +17,7 @@ const gateway = new ApolloGateway({
           'authorization',
           context.req.headers['authorization']
         );
-        console.log('will send request -> ', name, JSON.stringify(request));
+        // console.log('will send request -> ', name, JSON.stringify(request));
       }
     });
   }
