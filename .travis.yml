@@ -8,11 +8,20 @@ before_script:
   - npm install -g codecov
 jobs:
   include:
-    # - stage: test
-    #   script: npm test
     - stage: deploy
       script: make build push
     - stage: lambda
       script: make build-lambda
 after_success:
   - codecov
+deploy:
+  provider: releases
+  api_key:
+    secure: taVT+YyTfIVESIXWqMX1JKDrUUN2vY+JcKqUyBizJ6QChqGynhM/+XEEfNuuQRpJXkjcQyjmx2DgnOAueJPEhNBYoN3EsoFhWGPOb3hCHCZuXHysnqWTdEhDXpvNWvNRU2LsqFLRTPOZ49wsywtrB9QIYrangptSwhpJLCCgxtjIaQQ2wOqM7YHW23lKaN+7Kz5a+CXIM/+XqetTxIUn0sp1nkRqblyRbW4Vya6CO/NN9ivGncrwqEHcv4PBY959IKgk57lX4YSH66DDpZt4yfzJU1fenoamDfHYau2QuaGiHDb3CBnH+vq0lj5ChKoG7W7QyKHJ8xTvB9sFK2LE+p4Fc5MgFxx8xgCS+CWXrH8s0s/yVy4Bt2QNz27yo1PouPjuxGLHiyht7OPU4g9ysSE7A/jpDyLZyUJuoeVPfjYLwS+9LSsUjWBiYQD+eVdujg2RKhZAly9CFalYNJfd6uSO0YhCNgPk98ILb5h1dJycx/NgoU02IqM7hFZFyJE8umzx9OYHhHl8EoDRyOdmMcLYwaQCI8aV+VApQNRAMCd5G3kzxSpk90a8fsPmIsC4ec5yj4rkA2EJ+YeOYaWkcXlerq9z5DrTsrWzpSKwz3wjpbNZYDObvX7xdYRV8219Rk9t8q1TUAU8HG8g/5AdgGou1Xi1/cjZjdhxsYvKavU=
+  file: lambda.zip
+  skip_cleanup: true
+  on:
+    # tags: true
+    all_branches: true
+    repo: graphql-services/graphql-gateway
+    condition: $TRAVIS_BUILD_STAGE_NAME = Lambda
