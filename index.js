@@ -1,9 +1,20 @@
-try {
-  require('dotenv').config();
-} catch (err) {}
+const { getENV } = require("./env");
+const express = require("express");
+const { getApolloServer } = require("./apollo");
 
-const { start } = require('./lib/app');
+(async () => {
+  const app = express();
+  const server = await getApolloServer();
+  server.applyMiddleware({ app });
 
-start().catch(err => {
-  console.log('failed to start:', err);
-});
+  const PORT = getENV("PORT", "80");
+
+  // app.listen({ port: PORT }).then(({ url }) => {
+  //   console.log(`🚀 Server ready at ${url}`);
+  // });
+  app.listen({ port: PORT }, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+  });
+})();
+
+module.exports.getServer = getApolloServer;
