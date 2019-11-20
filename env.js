@@ -1,4 +1,8 @@
-export const getENV = <T>(name: string, defaultValue?: T): string | T => {
+try {
+  require('dotenv').config();
+} catch (err) {}
+
+getENV = (name, defaultValue) => {
   const value = process.env[name] || defaultValue;
 
   if (typeof value === 'undefined') {
@@ -7,9 +11,10 @@ export const getENV = <T>(name: string, defaultValue?: T): string | T => {
 
   return value;
 };
+module.exports.getENV = getENV;
 
-export const getENVArray = (prefix: string): string[] => {
-  let result: string[] = [];
+module.exports.getENVArray = prefix => {
+  let result = [];
 
   let value = getENV(prefix, null);
   if (typeof value === 'string') {
