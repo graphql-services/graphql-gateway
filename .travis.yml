@@ -12,5 +12,7 @@ jobs:
     #   script: npm test
     - stage: deploy
       script: make build push
+    - stage: lambda
+      script: make build-lambda
 after_success:
   - codecov
