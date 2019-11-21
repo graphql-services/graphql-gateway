@@ -21,7 +21,6 @@ deploy:
   file: lambda.zip
   skip_cleanup: true
   on:
-    # tags: true
-    all_branches: true
+    tags: true
     repo: graphql-services/graphql-gateway
     condition: $TRAVIS_BUILD_STAGE_NAME = Lambda
