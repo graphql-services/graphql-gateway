@@ -1,12 +1,6 @@
 # graphql-gateway
 
-Simple but extendable GraphQL gateway. Suited for containerized deployments with following features:
-
-- [x] Schema merging
-- [x] JWT token validation
-- [x] ACL permissions on field level
-- [ ] Prometheus metrics endpoint
-- [x] Apollo Engine tracing integration
+Apollo federation gateway wrapped in Docker image or AWS Lambda package.
 
 ## Docker
 
