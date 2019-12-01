@@ -1,12 +1,6 @@
 # graphql-gateway
 
-Simple but extendable GraphQL gateway. Suited for containerized deployments with following features:
-
-- [x] Schema merging
-- [x] JWT token validation
-- [x] ACL permissions on field level
-- [ ] Prometheus metrics endpoint
-- [x] Apollo Engine tracing integration
+Apollo federation gateway wrapped in Docker image or AWS Lambda package.
 
 ## Docker
 
@@ -31,8 +25,8 @@ services:
       - GRAPHQL_URL_0=https://graphql-demo.azurewebsites.net/
       - GRAPHQL_URL_1=https://api.graphloc.com/graphql
       - GRAPHQL_URL_2=http://my-custom-service/graphql
- my-custom-service:
-   image: ...
+  my-custom-service:
+    image: ...
 ```
 
 ## Merging GraphQL API's running in AWS Lambda
