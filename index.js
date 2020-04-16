@@ -4,6 +4,8 @@ const { getApolloServer } = require("./apollo");
 
 (async () => {
   const app = express();
+  app.use(express.json({ limit: "2mb" }));
+
   const server = await getApolloServer();
   server.applyMiddleware({ app });
 
