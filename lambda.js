@@ -10,6 +10,7 @@ const getServer = async () => {
   if (!server) {
     const apolloServer = await getApolloServer(true);
     const app = express();
+    app.use(express.json({ limit: "2mb" }));
     apolloServer.applyMiddleware({ app });
 
     server = awsServerlessExpress.createServer(app, null, binaryMimeTypes);
