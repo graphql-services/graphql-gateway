@@ -22,30 +22,38 @@ const gateway = new ApolloGateway({
         path,
         willSendRequest({ request, context }) {
           // request.http.headers.set('x-correlation-id', '...');
-          if (context.req && context.req.headers) {
+          if (
+            context.req &&
+            context.req.headers &&
+            context.req.headers["authorization"]
+          ) {
             request.http.headers.set(
               "authorization",
               context.req.headers["authorization"]
             );
           }
           // console.log('will send request -> ', name, JSON.stringify(request));
-        }
+        },
       });
     }
     return new RemoteGraphQLDataSource({
       url,
       willSendRequest({ request, context }) {
         // request.http.headers.set('x-correlation-id', '...');
-        if (context.req && context.req.headers) {
+        if (
+          context.req &&
+          context.req.headers &&
+          context.req.headers["authorization"]
+        ) {
           request.http.headers.set(
             "authorization",
             context.req.headers["authorization"]
           );
         }
         // console.log('will send request -> ', name, JSON.stringify(request));
-      }
+      },
     });
-  }
+  },
 });
 
 const getApolloServer = async (lambdaEnvironment = false) => {
@@ -56,8 +64,8 @@ const getApolloServer = async (lambdaEnvironment = false) => {
     executor,
     context: ({ req }) => ({ req }),
     engine: {
-      sendReportsImmediately: lambdaEnvironment
-    }
+      sendReportsImmediately: lambdaEnvironment,
+    },
   });
   return server;
 };
