@@ -8,10 +8,7 @@ const { getApolloServer } = require("./apollo");
   app.use(express.json({ limit: jsonBodyLimit }));
 
   const server = await getApolloServer();
-  let middleware = server.getMiddleware({});
-  app.use((req, res, next) => {
-    middleware(req, res, next);
-  });
+  server.applyMiddleware({ app });
 
   const activateUpdateGatewayInterval = getENV("GRAPHQL_UPDATE_GATEWAY", "false") === "true";
   const updateGatewayInterval = getENV("GRAPHQL_UPDATE_GATEWAY_INTERVAL_MS", "60000");

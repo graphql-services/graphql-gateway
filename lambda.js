@@ -12,10 +12,7 @@ const getServer = async () => {
     const app = express();
     const jsonBodyLimit = getENV("GRAPHQL_JSON_BODY_LIMIT", "2mb");
     app.use(express.json({ limit: jsonBodyLimit }));
-    let middleware = apolloServer.getMiddleware({});
-    app.use((req, res, next) => {
-      middleware(req, res, next);
-    });
+    apolloServer.applyMiddleware({ app });
 
     const activateUpdateGatewayInterval = getENV("GRAPHQL_UPDATE_GATEWAY", "false") === "true";
     const updateGatewayInterval = getENV("GRAPHQL_UPDATE_GATEWAY_INTERVAL_MS", "60000");
