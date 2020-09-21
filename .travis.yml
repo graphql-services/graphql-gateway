@@ -10,8 +10,10 @@ jobs:
   include:
     - stage: deploy
       script: make build push
+      if: tag IS present OR branch IS master
     - stage: lambda
       script: make build-lambda && mkdir release && mv lambda.zip release/lambda.zip
+      if: tag IS present OR branch IS master
 after_success:
   - codecov
 deploy:
