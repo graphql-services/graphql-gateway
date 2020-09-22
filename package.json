@@ -3,7 +3,7 @@
     "@apollo/gateway": "^0.11.0",
     "apollo-gateway-aws-lambda": "^0.2.1",
     "apollo-server": "^2.14.2",
-    "apollo-server-express": "^2.9.9",
+    "apollo-server-express": "^2.14.2",
     "aws-serverless-express": "^3.3.6",
     "express": "^4.17.1",
     "graphql": "^14.4.2"
