@@ -25,6 +25,8 @@ services:
       - GRAPHQL_URL_0=https://graphql-demo.azurewebsites.net/
       - GRAPHQL_URL_1=https://api.graphloc.com/graphql
       - GRAPHQL_URL_2=http://my-custom-service/graphql
+      - GRAPHQL_UPDATE_GATEWAY=true
+      - GRAPHQL_UPDATE_GATEWAY_INTERVAL_MS=60000
   my-custom-service:
     image: ...
 ```
@@ -39,7 +41,18 @@ GRAPHQL_URL_0=lambda://my-function-name/graphql[?version=my-version]
 GRAPHQL_URL_0=lambda://my-function-name/graphql?version=my-version
 ```
 
-### Apollo engine support
+## Autoupdating the schema
+
+In case You want the schema to be updated automatically on regular basis, You can turn on autoupdates using following envvars:
+
+```
+# enable feature
+GRAPHQL_UPDATE_GATEWAY=true
+# specify interval for updating the schema
+GRAPHQL_UPDATE_GATEWAY_INTERVAL_MS=60000
+```
+
+## Apollo engine support
 
 If you provide environment variable:
 
