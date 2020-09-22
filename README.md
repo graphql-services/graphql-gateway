@@ -1,5 +1,7 @@
 # graphql-gateway
 
+[![Build Status](https://travis-ci.org/graphql-services/graphql-gateway.svg?branch=master)](https://travis-ci.org/graphql-services/graphql-gateway)
+
 Apollo federation gateway wrapped in Docker image or AWS Lambda package.
 
 ## Docker
