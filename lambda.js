@@ -10,8 +10,26 @@ const getServer = async () => {
   if (!server) {
     const apolloServer = await getApolloServer(true);
     const app = express();
-    app.use(express.json({ limit: "2mb" }));
-    apolloServer.applyMiddleware({ app });
+    const jsonBodyLimit = getENV("GRAPHQL_JSON_BODY_LIMIT", "2mb");
+    app.use(express.json({ limit: jsonBodyLimit }));
+    let middleware = apolloServer.getMiddleware({});
+    app.use((req, res, next) => {
+      middleware(req, res, next);
+    });
+
+    const activateUpdateGatewayInterval = getENV("GRAPHQL_UPDATE_GATEWAY", "false") === "true";
+    const updateGatewayInterval = getENV("GRAPHQL_UPDATE_GATEWAY_INTERVAL_MS", "60000");
+    if (activateUpdateGatewayInterval === true)
+    {
+      setInterval(async () => {
+        try {
+          const apolloServer = await getApolloServer(true);
+          middleware = apolloServer.getMiddleware({});
+        } catch (error) {
+          console.error(error);
+        }
+      }, updateGatewayInterval);
+    }
 
     server = awsServerlessExpress.createServer(app, null, binaryMimeTypes);
   }
