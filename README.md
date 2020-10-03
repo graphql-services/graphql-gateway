@@ -33,6 +33,30 @@ services:
     image: ...
 ```
 
+## Using graph-manager
+
+You can connect gateway to [graph-manager service](https://github.com/graphql-services/graph-manager).
+
+Docker compose:
+
+```
+version: '3.4'
+services:
+  graphql-gateway:
+    image: graphql/gateway
+    links:
+      - graph-manager
+    ports:
+      - 8080:80
+    environment:
+      - GRAPH_MANAGER_URL=http://graph-manager/graphql
+      - GRAPH_MANAGER_GATEWAY_ID=my-gateway-id
+  graph-manager:
+    image: graphql/graph-manager
+```
+
+See more details about integration on graph-manager repository https://github.com/graphql-services/graph-manager
+
 ## Merging GraphQL API's running in AWS Lambda
 
 Gateway can also call AWS Lambda functions directly, just provide url in this format:
