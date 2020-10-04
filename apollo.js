@@ -10,18 +10,28 @@ const { createSubscriptionObservable } = require("./graph-manager");
 const { buildApolloGateway } = require("./apollo-gateway");
 const { parse } = require("graphql");
 
+const createMetricsPlugin = require("apollo-metrics");
+const { register } = require("prom-client");
+
 const urls = getENVArray("GRAPHQL_URL");
 const names = getENVArray("GRAPHQL_NAME", []);
 const graphManagerURL = getENV("GRAPH_MANAGER_URL", null);
 const graphManagerGatewayID = getENV("GRAPH_MANAGER_GATEWAY_ID", null);
 
+const prometheusMetricsEnabled =
+  getENV("PROMETHEUS_METRICS_ENABLED", "true") === "true";
+
 const getApolloServer = async (gateway, lambdaEnvironment = false) => {
   const { schema, executor } = await gateway.load();
+
+  const apolloMetricsPlugin = createMetricsPlugin(register);
 
   const server = new ApolloServer({
     schema,
     executor,
     context: ({ req }) => ({ req }),
+    plugins: prometheusMetricsEnabled ? [apolloMetricsPlugin] : [],
+    tracing: prometheusMetricsEnabled,
     engine: {
       sendReportsImmediately: lambdaEnvironment,
     },
