@@ -1,62 +1,21 @@
-const { getENVArray } = require("./env");
+const { getENVArray, getENV } = require("./env");
+const { GraphQLClient } = require("graphql-request");
 
 const { ApolloServer } = require("apollo-server-express");
-const { ApolloGateway, RemoteGraphQLDataSource } = require("@apollo/gateway");
-const { LambdaGraphQLDataSource } = require("apollo-gateway-aws-lambda");
-const { URL } = require("url");
+const {
+  getSdk,
+  OnGatewayVersionUpdatedDocument,
+} = require("./lib/graph-manager-sdk");
+const { createSubscriptionObservable } = require("./graph-manager");
+const { buildApolloGateway } = require("./apollo-gateway");
+const { parse } = require("graphql");
 
 const urls = getENVArray("GRAPHQL_URL");
 const names = getENVArray("GRAPHQL_NAME", []);
+const graphManagerURL = getENV("GRAPH_MANAGER_URL", null);
+const graphManagerGatewayID = getENV("GRAPH_MANAGER_GATEWAY_ID", null);
 
-const gateway = new ApolloGateway({
-  serviceList: urls.map((x, i) => ({ name: names[i] || x, url: x })),
-  buildService({ name, url }) {
-    if (url.indexOf("lambda://") === 0) {
-      const parsedUrl = new URL(url);
-      const fn = parsedUrl.host;
-      const path = parsedUrl.pathname;
-      const version = parsedUrl.searchParams.get("version");
-      const functionName = fn + (version ? ":" + version : "");
-      return new LambdaGraphQLDataSource({
-        functionName,
-        path,
-        willSendRequest({ request, context }) {
-          // request.http.headers.set('x-correlation-id', '...');
-          if (
-            context.req &&
-            context.req.headers &&
-            context.req.headers["authorization"]
-          ) {
-            request.http.headers.set(
-              "authorization",
-              context.req.headers["authorization"]
-            );
-          }
-          // console.log('will send request -> ', name, JSON.stringify(request));
-        },
-      });
-    }
-    return new RemoteGraphQLDataSource({
-      url,
-      willSendRequest({ request, context }) {
-        // request.http.headers.set('x-correlation-id', '...');
-        if (
-          context.req &&
-          context.req.headers &&
-          context.req.headers["authorization"]
-        ) {
-          request.http.headers.set(
-            "authorization",
-            context.req.headers["authorization"]
-          );
-        }
-        // console.log('will send request -> ', name, JSON.stringify(request));
-      },
-    });
-  },
-});
-
-const getApolloServer = async (lambdaEnvironment = false) => {
+const getApolloServer = async (gateway, lambdaEnvironment = false) => {
   const { schema, executor } = await gateway.load();
 
   const server = new ApolloServer({
@@ -67,7 +26,106 @@ const getApolloServer = async (lambdaEnvironment = false) => {
       sendReportsImmediately: lambdaEnvironment,
     },
   });
+
   return server;
 };
 
+const getApolloServerMiddleware = async (lambdaEnvironment = false) => {
+  if (graphManagerURL && graphManagerGatewayID) {
+    return getApolloServerMiddlewareFromGraphManager();
+  }
+
+  const gwConfig = {
+    serviceList: urls.map((x, i) => ({ name: names[i] || x, url: x })),
+  };
+
+  const gateway = await buildApolloGateway(gwConfig);
+  const server = await getApolloServer(gateway, lambdaEnvironment);
+  let middleware = server.getMiddleware({});
+
+  const activateUpdateGatewayInterval =
+    getENV("GRAPHQL_UPDATE_GATEWAY", "false") === "true";
+  const updateGatewayInterval = getENV(
+    "GRAPHQL_UPDATE_GATEWAY_INTERVAL_MS",
+    "60000"
+  );
+  if (activateUpdateGatewayInterval === true) {
+    setInterval(async () => {
+      try {
+        const server = await getApolloServer();
+        middleware = server.getMiddleware({});
+      } catch (error) {
+        console.error(error);
+      }
+    }, updateGatewayInterval);
+  }
+
+  return (req, res, next) => {
+    middleware(req, res, next);
+  };
+};
+
+const getApolloServerMiddlewareFromGraphManager = async (
+  lambdaEnvironment = false
+) => {
+  console.log(
+    `Using graph-manager on ${graphManagerURL} and gateway ID '${graphManagerGatewayID}'`
+  );
+
+  const client = new GraphQLClient(graphManagerURL);
+  const sdk = getSdk(client);
+  const gw = await sdk.getGateway({ id: graphManagerGatewayID });
+
+  if (!gw.gateway.currentVersion) {
+    throw new Error("Gateway has no currentVersion");
+  }
+  const gwConfig = {
+    serviceList: urls.map((x, i) => ({ name: names[i] || x, url: x })),
+    localServiceList: gw.gateway.currentVersion.serviceSchemas.map(
+      (schema) => ({
+        typeDefs: parse(schema.typeDefs),
+        name: schema.service.name,
+        url: schema.service.url,
+      })
+    ),
+  };
+
+  const gateway = await buildApolloGateway(gwConfig);
+  const server = await getApolloServer(gateway, lambdaEnvironment);
+  let middleware = server.getMiddleware({});
+
+  const subscriptionClient = createSubscriptionObservable(
+    graphManagerURL, // GraphQL endpoint
+    OnGatewayVersionUpdatedDocument, // Subscription query
+    { gatewayId: graphManagerGatewayID } // Query variables
+  );
+  subscriptionClient.subscribe(
+    async (eventData) => {
+      console.log("Received updated from graph-manager");
+      // console.log(JSON.stringify(eventData, null, 2));
+      const gwConfig = {
+        serviceList: urls.map((x, i) => ({ name: names[i] || x, url: x })),
+        localServiceList: eventData.data.gatewayVersionUpdated.gateway.currentVersion.serviceSchemas.map(
+          (schema) => ({
+            typeDefs: parse(schema.typeDefs),
+            name: schema.service.name,
+            url: schema.service.url,
+          })
+        ),
+      };
+      const gateway = await buildApolloGateway(gwConfig);
+      const server = await getApolloServer(gateway, lambdaEnvironment);
+      middleware = server.getMiddleware({});
+    },
+    (err) => {
+      console.log("Failed to get subscription data from graph-manager", err);
+    }
+  );
+
+  return (req, res, next) => {
+    middleware(req, res, next);
+  };
+};
+
 module.exports.getApolloServer = getApolloServer;
+module.exports.getApolloServerMiddleware = getApolloServerMiddleware;
