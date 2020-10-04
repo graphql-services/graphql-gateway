@@ -87,3 +87,8 @@ APOLLO_ENGINE_KEY=...
 ```
 
 The gateway automatically starts with Engine proxy.
+
+## Prometheus metrics
+
+This gateway automatically exports prometheus metrics on `/metrics` endpoint using [apollo-metrics](https://github.com/dotellie/apollo-metrics).
+You can disable this feature by settings environment variable `PROMETHEUS_METRICS_ENABLED=false`
