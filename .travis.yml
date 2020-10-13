@@ -25,11 +25,11 @@ deploy:
     on:
       tags: true
       repo: graphql-services/graphql-gateway
-      condition: $TRAVIS_BUILD_STAGE_NAME = Lambda
+      condition: $TRAVIS_BUILD_STAGE_NAME = lambda
   - provider: s3
     access_key_id: $AWS_ACCESS_KEY_ID
     secret_access_key: $AWS_SECRET_ACCESS_KEY
-    file: lambda.zip
+    glob: "*.*"
     bucket: "novacloud-lambda-functions"
     skip_cleanup: true
     region: eu-central-1
@@ -38,4 +38,4 @@ deploy:
     on:
       tags: true
       repo: $TRAVIS_REPO_SLUG
-      condition: $TRAVIS_BUILD_STAGE_NAME = Lambda
+      condition: $TRAVIS_BUILD_STAGE_NAME = lambda
