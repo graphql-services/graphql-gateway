@@ -12,6 +12,7 @@ const { parse } = require("graphql");
 
 const createMetricsPlugin = require("apollo-metrics");
 const { register } = require("prom-client");
+const apolloMetricsPlugin = createMetricsPlugin(register);
 
 const urls = getENVArray("GRAPHQL_URL");
 const names = getENVArray("GRAPHQL_NAME", []);
@@ -23,8 +24,6 @@ const prometheusMetricsEnabled =
 
 const getApolloServer = async (gateway, lambdaEnvironment = false) => {
   const { schema, executor } = await gateway.load();
-
-  const apolloMetricsPlugin = createMetricsPlugin(register);
 
   const server = new ApolloServer({
     schema,
@@ -62,7 +61,7 @@ const getApolloServerMiddleware = async (lambdaEnvironment = false) => {
   if (activateUpdateGatewayInterval === true) {
     setInterval(async () => {
       try {
-        const server = await getApolloServer();
+        const server = await getApolloServer(gateway, lambdaEnvironment);
         middleware = server.getMiddleware({});
       } catch (error) {
         console.error(error);
