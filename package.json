@@ -20,7 +20,7 @@
     "start-local": "PORT=3000 node index"
   },
   "devDependencies": {
-    "aws-sdk": "^2.580.0",
+    "aws-sdk": "^2.814.0",
     "dotenv": "^5.0.1"
   }
 }
